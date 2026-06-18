@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, updateRowByColumn, deleteRowByColumn } from '@/lib/sheets';
+import { requireAuthForRequest, requireOwnership, handleApiError } from '@/lib/api-auth';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const user = await requireAuthForRequest(request);
     const updates = await request.json();
+
     const tasks = await getAllRows('tasks');
     const task = tasks.find((t) => t.id === params.id);
 
@@ -14,26 +17,26 @@ export async function PATCH(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    const updated = { ...task, ...updates };
+    requireOwnership(user.id, task.user_id);
+
+    const updated = { ...task, ...updates, user_id: task.user_id };
     await updateRowByColumn('tasks', 'id', params.id, updated);
 
     const updatedTasks = await getAllRows('tasks');
     const result = updatedTasks.find((t) => t.id === params.id);
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error updating task:', error);
-    return NextResponse.json(
-      { error: 'Failed to update task' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const user = await requireAuthForRequest(request);
+
     const tasks = await getAllRows('tasks');
     const task = tasks.find((t) => t.id === params.id);
 
@@ -41,13 +44,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
+    requireOwnership(user.id, task.user_id);
+
     await deleteRowByColumn('tasks', 'id', params.id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting task:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete task' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

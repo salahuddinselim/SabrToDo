@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, updateMultipleRows } from '@/lib/sheets';
+import { requireAuthForRequest, requireOwnership, handleApiError } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, taskIds } = await request.json();
+    const user = await requireAuthForRequest(request);
+    const { taskIds } = await request.json();
 
-    if (!userId || !taskIds) {
+    if (!taskIds) {
       return NextResponse.json(
-        { error: 'userId and taskIds are required' },
+        { error: 'taskIds is required' },
         { status: 400 }
       );
     }
@@ -16,6 +18,7 @@ export async function POST(request: NextRequest) {
     const updates = taskIds.map((id: string, index: number) => {
       const task = tasks.find((t) => t.id === id);
       if (!task) return null;
+      requireOwnership(user.id, task.user_id);
       return {
         matchValue: id,
         data: { ...task, order_index: String(index) },
@@ -25,10 +28,6 @@ export async function POST(request: NextRequest) {
     await updateMultipleRows('tasks', 'id', updates);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error reordering tasks:', error);
-    return NextResponse.json(
-      { error: 'Failed to reorder tasks' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

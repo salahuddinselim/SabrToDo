@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, updateMultipleRows } from '@/lib/sheets';
+import { requireAuthForRequest, handleApiError } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json();
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'userId is required' },
-        { status: 400 }
-      );
-    }
+    const user = await requireAuthForRequest(request);
 
     const notifications = await getAllRows('notifications');
     const unread = notifications.filter(
-      (n) => n.user_id === userId && n.is_read === 'false'
+      (n) => n.user_id === user.id && n.is_read === 'false'
     );
 
     if (unread.length === 0) {
@@ -29,10 +23,6 @@ export async function POST(request: NextRequest) {
     await updateMultipleRows('notifications', 'id', updates);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error marking all notifications as read:', error);
-    return NextResponse.json(
-      { error: 'Failed to mark notifications as read' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

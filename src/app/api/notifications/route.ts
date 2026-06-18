@@ -1,20 +1,15 @@
 import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, appendRow } from '@/lib/sheets';
+import { requireAuthForRequest, requireOwnership, handleApiError } from '@/lib/api-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.nextUrl.searchParams.get('userId');
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'userId query parameter is required' },
-        { status: 400 }
-      );
-    }
+    const user = await requireAuthForRequest(request);
 
     const notifications = await getAllRows('notifications');
     const userNotifications = notifications
-      .filter((n) => n.user_id === userId)
+      .filter((n) => n.user_id === user.id)
       .sort(
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -24,29 +19,26 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(userNotifications);
   } catch (error) {
-    console.error('Error fetching notifications:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch notifications' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await requireAuthForRequest(request);
     const body = await request.json();
-    const { user_id, type, title, message, task_id } = body;
+    const { type, title, message, task_id } = body;
 
-    if (!user_id || !type || !title) {
+    if (!type || !title) {
       return NextResponse.json(
-        { error: 'user_id, type, and title are required' },
+        { error: 'type and title are required' },
         { status: 400 }
       );
     }
 
     const notification = {
       id: randomUUID(),
-      user_id,
+      user_id: user.id,
       type,
       title,
       message: message || '',
@@ -58,10 +50,6 @@ export async function POST(request: NextRequest) {
     await appendRow('notifications', notification);
     return NextResponse.json(notification, { status: 201 });
   } catch (error) {
-    console.error('Error creating notification:', error);
-    return NextResponse.json(
-      { error: 'Failed to create notification' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

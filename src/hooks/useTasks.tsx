@@ -64,7 +64,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         status: 'pending',
         notify_before: data.notify_before,
         completed_at: undefined,
-      });
+      }, user.csrfToken);
       setTasks((prev) => [newTask, ...prev]);
       showToast('Task created successfully!', 'success');
     } catch (err: unknown) {
@@ -77,7 +77,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
   const editTask = async (id: string, data: Partial<Task>) => {
     try {
-      const updatedTask = await updateTask(id, data);
+      const updatedTask = await updateTask(id, data, user?.csrfToken);
       setTasks((prev) => prev.map((task) => (task.id === id ? updatedTask : task)));
       showToast('Task updated!', 'success');
     } catch (err: unknown) {
@@ -90,7 +90,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
   const removeTask = async (id: string) => {
     try {
-      await deleteTask(id);
+      await deleteTask(id, user?.csrfToken);
       setTasks((prev) => prev.filter((task) => task.id !== id));
       showToast('Task deleted', 'info');
     } catch (err: unknown) {
@@ -112,7 +112,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       const updatedTask = await updateTask(id, {
         status: newStatus,
         completed_at: completedAt || undefined,
-      });
+      }, user?.csrfToken);
       setTasks((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
 
       if (newStatus === 'completed') {
@@ -134,7 +134,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     });
 
     try {
-      await reorderTasks(user!.uid, taskIds);
+      await reorderTasks(user!.uid, taskIds, user?.csrfToken);
     } catch {
       setTasks(previousTasks);
       showToast('Failed to reorder tasks', 'error');

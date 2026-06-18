@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows } from '@/lib/sheets';
+import { requireAuthForRequest, requireOwnership, handleApiError } from '@/lib/api-auth';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { firebaseUid: string } }
 ) {
   try {
-    const users = await getAllRows('users');
-    const user = users.find((u) => u.firebase_uid === params.firebaseUid);
+    const user = await requireAuthForRequest(request);
+    requireOwnership(user.id, params.firebaseUid);
 
-    if (!user) {
+    const users = await getAllRows('users');
+    const userData = users.find((u) => u.firebase_uid === params.firebaseUid);
+
+    if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json(user);
+    return NextResponse.json(userData);
   } catch (error) {
-    console.error('Error fetching user:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch user' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

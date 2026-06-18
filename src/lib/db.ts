@@ -4,11 +4,18 @@ const BASE = '/api';
 
 async function request<T>(
   url: string,
-  options?: RequestInit
+  options?: RequestInit & { csrfToken?: string }
 ): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (options?.csrfToken) {
+    headers['X-CSRF-Token'] = options.csrfToken;
+  }
+  const { csrfToken: _csrf, ...fetchOptions } = options || {};
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
+    headers,
+    ...fetchOptions,
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -20,11 +27,13 @@ async function request<T>(
 export const createOrUpdateUser = async (
   firebaseUid: string,
   email: string,
-  displayName?: string
+  displayName?: string,
+  csrfToken?: string
 ): Promise<User> => {
   return request(`${BASE}/users`, {
     method: 'POST',
     body: JSON.stringify({ firebaseUid, email, displayName }),
+    csrfToken,
   });
 };
 
@@ -43,35 +52,41 @@ export const getTasks = async (userId: string): Promise<Task[]> => {
 };
 
 export const createTask = async (
-  task: Omit<Task, 'id' | 'created_at' | 'order_index'>
+  task: Omit<Task, 'id' | 'created_at' | 'order_index'>,
+  csrfToken?: string
 ): Promise<Task> => {
   return request(`${BASE}/tasks`, {
     method: 'POST',
     body: JSON.stringify(task),
+    csrfToken,
   });
 };
 
 export const updateTask = async (
   id: string,
-  updates: Partial<Task>
+  updates: Partial<Task>,
+  csrfToken?: string
 ): Promise<Task> => {
   return request(`${BASE}/tasks/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(updates),
+    csrfToken,
   });
 };
 
-export const deleteTask = async (id: string): Promise<void> => {
-  await request(`${BASE}/tasks/${id}`, { method: 'DELETE' });
+export const deleteTask = async (id: string, csrfToken?: string): Promise<void> => {
+  await request(`${BASE}/tasks/${id}`, { method: 'DELETE', csrfToken });
 };
 
 export const reorderTasks = async (
   userId: string,
-  taskIds: string[]
+  taskIds: string[],
+  csrfToken?: string
 ): Promise<void> => {
   await request(`${BASE}/tasks/reorder`, {
     method: 'POST',
     body: JSON.stringify({ userId, taskIds }),
+    csrfToken,
   });
 };
 
@@ -84,23 +99,27 @@ export const getNotifications = async (
 };
 
 export const createNotification = async (
-  notification: Omit<Notification, 'id' | 'created_at' | 'is_read'>
+  notification: Omit<Notification, 'id' | 'created_at' | 'is_read'>,
+  csrfToken?: string
 ): Promise<Notification> => {
   return request(`${BASE}/notifications`, {
     method: 'POST',
     body: JSON.stringify(notification),
+    csrfToken,
   });
 };
 
-export const markNotificationAsRead = async (id: string): Promise<void> => {
-  await request(`${BASE}/notifications/${id}`, { method: 'PATCH' });
+export const markNotificationAsRead = async (id: string, csrfToken?: string): Promise<void> => {
+  await request(`${BASE}/notifications/${id}`, { method: 'PATCH', csrfToken });
 };
 
 export const markAllNotificationsAsRead = async (
-  userId: string
+  userId: string,
+  csrfToken?: string
 ): Promise<void> => {
   await request(`${BASE}/notifications/mark-all-read`, {
     method: 'POST',
     body: JSON.stringify({ userId }),
+    csrfToken,
   });
 };

@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, updateRowByColumn } from '@/lib/sheets';
+import { requireAuthForRequest, requireOwnership, handleApiError } from '@/lib/api-auth';
 
 export async function PATCH(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const user = await requireAuthForRequest(request);
+
     const notifications = await getAllRows('notifications');
     const notification = notifications.find((n) => n.id === params.id);
 
@@ -16,6 +19,8 @@ export async function PATCH(
       );
     }
 
+    requireOwnership(user.id, notification.user_id);
+
     await updateRowByColumn('notifications', 'id', params.id, {
       ...notification,
       is_read: 'true',
@@ -23,10 +28,6 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error marking notification as read:', error);
-    return NextResponse.json(
-      { error: 'Failed to mark notification as read' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

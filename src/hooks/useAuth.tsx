@@ -14,25 +14,29 @@ interface AuthContextType {
   clearError: () => void;
 }
 
-function mapSessionUser(sessionUser?: {
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
-  id?: string;
-}): AuthUser | null {
-  if (!sessionUser?.id) return null;
+function mapSessionUser(session: {
+  user?: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    id?: string;
+  };
+  csrfToken?: string;
+} | null): AuthUser | null {
+  if (!session?.user?.id) return null;
   return {
-    uid: sessionUser.id,
-    email: sessionUser.email ?? null,
-    displayName: sessionUser.name ?? null,
-    photoURL: sessionUser.image ?? null,
+    uid: session.user.id,
+    email: session.user.email ?? null,
+    displayName: session.user.name ?? null,
+    photoURL: session.user.image ?? null,
+    csrfToken: session.csrfToken,
   };
 }
 
 export function useAuth(): AuthContextType {
   const { data: session, status } = useSession();
 
-  const user = mapSessionUser(session?.user);
+  const user = mapSessionUser(session);
 
   const handleSignIn = async () => {
     await signIn('google', { redirectTo: '/dashboard' });
