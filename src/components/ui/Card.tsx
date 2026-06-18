@@ -14,8 +14,8 @@ export function Card({ children, className, onClick, hover = true }: CardProps) 
     <div
       onClick={onClick}
       className={cn(
-        'glass rounded-xl p-4 transition-all duration-200',
-        hover && 'hover:shadow-lg hover:shadow-primary/5 hover:scale-[1.01]',
+        'glass rounded-2xl p-4 transition-all duration-200',
+        hover && 'hover:shadow-xl hover:shadow-cyan-950/40 hover:-translate-y-0.5',
         onClick && 'cursor-pointer',
         className
       )}
@@ -45,7 +45,7 @@ interface CardTitleProps {
 
 export function CardTitle({ children, className }: CardTitleProps) {
   return (
-    <h3 className={cn('text-lg font-semibold text-white', className)}>
+    <h3 className={cn('text-base sm:text-lg font-semibold text-white', className)}>
       {children}
     </h3>
   );

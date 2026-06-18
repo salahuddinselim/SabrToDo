@@ -18,9 +18,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         <select
           ref={ref}
           className={cn(
-            'w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700',
-            'text-white',
-            'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary',
+            'w-full px-4 py-3 rounded-xl bg-slate-950/25 border border-cyan-100/15',
+            'text-slate-100',
+            'focus:outline-none focus:ring-2 focus:ring-primary/45 focus:border-primary/70',
             'transition-all duration-200 cursor-pointer',
             'appearance-none bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2394A3B8\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E")]',
             'bg-[length:1.25rem] bg-[right_1rem_center] bg-no-repeat',

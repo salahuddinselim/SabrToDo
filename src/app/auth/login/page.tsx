@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Chrome } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
@@ -16,33 +17,48 @@ export default function LoginPage() {
     return null;
   }
 
+  const container = {
+    hidden: { opacity: 0, y: 16 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { staggerChildren: 0.08, duration: 0.35, ease: 'easeOut' },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/15 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/15 rounded-full blur-3xl" />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        variants={container}
+        initial="hidden"
+        animate="show"
         className="w-full max-w-md relative"
       >
+        <motion.div variants={item}>
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-slate-400 hover:text-cyan-100 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to home
         </Link>
+        </motion.div>
 
-        <div className="glass-strong rounded-2xl p-8">
+        <motion.div variants={item} className="glass-strong rounded-3xl p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/30">
-              <span className="text-white font-bold text-2xl">S</span>
-            </div>
-            <h1 className="text-2xl font-bold text-white">Welcome back</h1>
-            <p className="text-slate-400 mt-2">Sign in to your SabrFlow account</p>
+            <Logo size="lg" className="mx-auto mb-4 shadow-lg shadow-primary/20 rounded-2xl" />
+            <h1 className="text-2xl font-display font-bold text-white">Welcome back</h1>
+            <p className="text-slate-300 mt-2">Sign in to continue your workflow</p>
           </div>
 
           <Button
@@ -63,7 +79,7 @@ export default function LoginPage() {
               Sign up
             </Link>
           </p>
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );

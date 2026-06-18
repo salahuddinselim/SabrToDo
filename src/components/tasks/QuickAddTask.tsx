@@ -1,24 +1,18 @@
 'use client';
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Send, Sparkles } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
-import { Input, Textarea } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { TaskFormModal } from './TaskFormModal';
-import { TaskFormData } from '@/types';
+import { Input } from '@/components/ui/Input';
 import { useTasks } from '@/hooks/useTasks';
 
 const quickAddSchema = z.object({
   title: z.string().min(1, 'Title is required'),
 });
 
-export function QuickAddTask() {
-  const [showFullForm, setShowFullForm] = useState(false);
+export function QuickAddTask({ compact }: { compact?: boolean }) {
   const { addTask } = useTasks();
 
   const {
@@ -39,53 +33,25 @@ export function QuickAddTask() {
     reset();
   };
 
-  const onFullSubmit = async (data: TaskFormData) => {
-    await addTask(data);
-  };
-
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative"
+    <form onSubmit={handleSubmit(onQuickSubmit)} className="flex gap-2 items-start">
+      <div className="flex-1 relative">
+        <Input
+          placeholder={compact ? 'Quick add a task...' : 'Add a task... (press Enter)'}
+          className="bg-slate-950/10 border border-cyan-100/10 text-sm sm:text-base py-2.5 pl-3 pr-10 rounded-xl"
+          {...register('title')}
+          error={errors.title?.message}
+        />
+        <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-300/60" />
+      </div>
+      <Button
+        type="submit"
+        loading={isSubmitting}
+        size="sm"
+        className="h-[42px] min-w-[44px]"
       >
-        <div className="glass-strong rounded-2xl p-2">
-          <form onSubmit={handleSubmit(onQuickSubmit)} className="flex gap-2">
-            <div className="flex-1 relative">
-              <Input
-                placeholder="Add a task... (press Enter)"
-                className="bg-transparent border-none text-lg py-4 pl-4 pr-12"
-                {...register('title')}
-                error={errors.title?.message}
-              />
-              <Sparkles className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-            </div>
-            <Button
-              type="submit"
-              loading={isSubmitting}
-              className="px-6"
-              size="lg"
-            >
-              <Send className="w-5 h-5" />
-            </Button>
-          </form>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setShowFullForm(true)}
-          className="absolute right-0 top-full mt-2 text-sm text-slate-400 hover:text-primary transition-colors"
-        >
-          Need more details? Add full task
-        </button>
-      </motion.div>
-
-      <TaskFormModal
-        isOpen={showFullForm}
-        onClose={() => setShowFullForm(false)}
-        onSubmit={onFullSubmit}
-      />
-    </>
+        <Send className="w-4 h-4" />
+      </Button>
+    </form>
   );
 }

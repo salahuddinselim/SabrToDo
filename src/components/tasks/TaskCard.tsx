@@ -7,12 +7,11 @@ import {
   Trash2,
   Edit2,
   Clock,
-  Calendar,
   AlertCircle,
   GripVertical,
 } from 'lucide-react';
 import { Task } from '@/types';
-import { cn, formatDate, formatTime, getDueDateStatus } from '@/lib/utils';
+import { cn, formatDate, getDueDateStatus } from '@/lib/utils';
 
 interface TaskCardProps {
   task: Task;
@@ -32,9 +31,9 @@ export function TaskCard({
   const [isHovered, setIsHovered] = useState(false);
 
   const priorityColors = {
-    low: 'border-l-emerald-400',
-    medium: 'border-l-amber-400',
-    high: 'border-l-red-400',
+    low: 'border-l-emerald-400/90',
+    medium: 'border-l-amber-400/90',
+    high: 'border-l-rose-400/90',
   };
 
   const priorityBadges = {
@@ -56,18 +55,18 @@ export function TaskCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'group relative glass rounded-xl p-4 transition-all duration-200',
-        'border-l-4',
+        'group relative glass rounded-xl p-3 transition-all duration-200',
+        'border-l-[3px] border border-cyan-100/10',
         priorityColors[task.priority],
         isCompleted && 'opacity-60',
-        isDragging && 'shadow-2xl shadow-primary/20 rotate-2 scale-105',
-        !isDragging && 'hover:shadow-lg hover:shadow-primary/10'
+        isDragging && 'shadow-2xl shadow-primary/30 rotate-1.5 scale-[1.02]',
+        !isDragging && 'hover:shadow-xl hover:shadow-cyan-950/35'
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2.5">
         <div
           className={cn(
-            'flex-shrink-0 w-6 h-6 rounded-full border-2 cursor-pointer',
+            'flex-shrink-0 w-5 h-5 rounded-full border-2 cursor-pointer mt-1',
             'transition-all duration-200 flex items-center justify-center',
             isCompleted
               ? 'bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-400'
@@ -75,13 +74,13 @@ export function TaskCard({
           )}
           onClick={() => onToggleComplete(task.id)}
         >
-          {isCompleted && <Check className="w-4 h-4 text-white" />}
+          {isCompleted && <Check className="w-3 h-3 text-white" />}
         </div>
 
         <div className="flex-1 min-w-0">
           <h4
             className={cn(
-              'font-medium text-white mb-1 transition-all duration-200',
+              'text-sm sm:text-[15px] font-semibold text-white transition-all duration-200',
               isCompleted && 'line-through text-slate-400'
             )}
           >
@@ -89,15 +88,15 @@ export function TaskCard({
           </h4>
 
           {task.description && (
-            <p className="text-sm text-slate-400 mb-2 line-clamp-2">
+            <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
               {task.description}
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 mt-2">
             <span
               className={cn(
-                'px-2 py-0.5 rounded-full text-xs font-medium capitalize',
+                'px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize tracking-wide',
                 priorityBadges[task.priority]
               )}
             >
@@ -107,7 +106,7 @@ export function TaskCard({
             {task.due_date && (
               <span
                 className={cn(
-                  'flex items-center gap-1 text-xs',
+                  'flex items-center gap-1 text-[10px] font-medium',
                   dueDateStatus === 'overdue' && !isCompleted
                     ? 'text-red-400'
                     : dueDateStatus === 'today'
@@ -116,9 +115,9 @@ export function TaskCard({
                 )}
               >
                 {dueDateStatus === 'overdue' && !isCompleted ? (
-                  <AlertCircle className="w-3 h-3" />
+                  <AlertCircle className="w-2.5 h-2.5" />
                 ) : (
-                  <Clock className="w-3 h-3" />
+                  <Clock className="w-2.5 h-2.5" />
                 )}
                 {formatDate(task.due_date)}
                 {dueDateStatus === 'today' && ' • Today'}
@@ -130,21 +129,21 @@ export function TaskCard({
 
         <div
           className={cn(
-            'flex items-center gap-1 transition-all duration-200',
-            isHovered ? 'opacity-100' : 'opacity-0'
+            'flex items-center gap-0.5 transition-all duration-200',
+            isHovered ? 'opacity-100' : 'opacity-100 sm:opacity-0'
           )}
         >
           <button
             onClick={() => onEdit(task)}
-            className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-white"
+            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => onDelete(task.id)}
-            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors text-slate-400 hover:text-red-400"
+            className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors text-slate-400 hover:text-red-300"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
 
@@ -154,7 +153,7 @@ export function TaskCard({
             isHovered && 'opacity-50'
           )}
         >
-          <GripVertical className="w-5 h-5 text-slate-500" />
+          <GripVertical className="w-4 h-4 text-slate-500" />
         </div>
       </div>
     </motion.div>

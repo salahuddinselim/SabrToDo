@@ -9,6 +9,7 @@ const SHEET_NAMES = {
 type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES];
 
 let sheetsClient: sheets_v4.Resource$Spreadsheets | null = null;
+let initPromise: Promise<void> | null = null;
 
 function getAuth() {
   return new google.auth.GoogleAuth({
@@ -29,6 +30,17 @@ function getClient() {
 }
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
+
+const HEADERS: Record<SheetName, string[]> = {
+  users: ['id', 'firebase_uid', 'email', 'display_name', 'created_at', 'updated_at'],
+  tasks: [
+    'id', 'user_id', 'title', 'description', 'due_date',
+    'priority', 'status', 'notify_before', 'created_at', 'completed_at', 'order_index',
+  ],
+  notifications: [
+    'id', 'user_id', 'type', 'title', 'message', 'task_id', 'is_read', 'created_at',
+  ],
+};
 
 async function ensureSheetExists(sheetName: SheetName) {
   try {
@@ -58,49 +70,46 @@ async function ensureSheetExists(sheetName: SheetName) {
 }
 
 export async function initSheet() {
-  const sheets = getClient();
-  try {
-    await sheets.get({ spreadsheetId: SPREADSHEET_ID });
-  } catch {
-    throw new Error(
-      'Cannot access spreadsheet. Make sure GOOGLE_SHEET_ID is correct and the service account has Editor access.'
-    );
-  }
+  if (initPromise) return initPromise;
 
-  for (const name of Object.values(SHEET_NAMES)) {
-    await ensureSheetExists(name);
-  }
-
-  const headers: Record<SheetName, string[]> = {
-    users: ['id', 'firebase_uid', 'email', 'display_name', 'created_at', 'updated_at'],
-    tasks: [
-      'id', 'user_id', 'title', 'description', 'due_date',
-      'priority', 'status', 'notify_before', 'created_at', 'completed_at', 'order_index',
-    ],
-    notifications: [
-      'id', 'user_id', 'type', 'title', 'message', 'task_id', 'is_read', 'created_at',
-    ],
-  };
-
-  for (const name of Object.values(SHEET_NAMES)) {
-    const result = await sheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${name}!A1:Z1`,
-    });
-    if (!result.data.values || result.data.values[0]?.length === 0) {
-      await sheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${name}!A1`,
-        valueInputOption: 'RAW',
-        requestBody: { values: [headers[name]] },
-      });
+  initPromise = (async () => {
+    const sheets = getClient();
+    try {
+      await sheets.get({ spreadsheetId: SPREADSHEET_ID });
+    } catch {
+      initPromise = null;
+      throw new Error(
+        'Cannot access spreadsheet. Make sure GOOGLE_SHEET_ID is correct and the service account has Editor access.'
+      );
     }
-  }
+
+    for (const name of Object.values(SHEET_NAMES)) {
+      await ensureSheetExists(name);
+    }
+
+    for (const name of Object.values(SHEET_NAMES)) {
+      const result = await getClient().values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${name}!A1:Z1`,
+      });
+      if (!result.data.values || result.data.values[0]?.length === 0) {
+        await getClient().values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${name}!A1`,
+          valueInputOption: 'RAW',
+          requestBody: { values: [HEADERS[name]] },
+        });
+      }
+    }
+  })();
+
+  return initPromise;
 }
 
 export async function getAllRows(
   sheetName: SheetName
 ): Promise<Record<string, string>[]> {
+  await initSheet();
   const result = await getClient().values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A:Z`,
@@ -123,6 +132,7 @@ export async function appendRow(
   sheetName: SheetName,
   data: Record<string, string>
 ) {
+  await initSheet();
   const result = await getClient().values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A1:Z1`,
@@ -146,6 +156,7 @@ export async function updateRowByColumn(
   matchValue: string,
   data: Record<string, string>
 ) {
+  await initSheet();
   const result = await getClient().values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A:Z`,
@@ -176,6 +187,7 @@ export async function deleteRowByColumn(
   columnName: string,
   matchValue: string
 ) {
+  await initSheet();
   const result = await getClient().values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A:Z`,
@@ -230,6 +242,7 @@ export async function updateMultipleRows(
   columnName: string,
   updates: Array<{ matchValue: string; data: Record<string, string> }>
 ) {
+  await initSheet();
   const result = await getClient().values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A:Z`,

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -19,6 +20,7 @@ import { useTasks } from '@/hooks/useTasks';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { TaskFormModal } from '@/components/tasks/TaskFormModal';
 import { Button } from '@/components/ui/Button';
+import { Logo } from '@/components/ui/Logo';
 import { TaskFormData } from '@/types';
 
 interface Notification {
@@ -83,14 +85,12 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 glass-strong border-b border-slate-700/50">
+      <header className="fixed top-0 left-0 right-0 z-40 glass-strong border-b border-cyan-100/15">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link href="/dashboard" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shadow-lg shadow-primary/30">
-                <span className="text-white font-bold text-lg">S</span>
-              </div>
-              <span className="text-xl font-bold gradient-text hidden sm:block">
+            <Link href="/dashboard" className="flex items-center gap-3 text-slate-100">
+              <Logo size="sm" className="rounded-xl shadow-lg shadow-primary/20" />
+              <span className="text-xl font-display font-bold gradient-text hidden sm:block">
                 SabrFlow
               </span>
             </Link>
@@ -117,7 +117,7 @@ export function Header() {
               <div className="relative">
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="relative p-2 rounded-xl hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-white"
+                  className="relative p-2 rounded-xl hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
                 >
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
@@ -134,9 +134,9 @@ export function Header() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-80 glass-strong rounded-xl shadow-2xl overflow-hidden"
+                      className="absolute right-0 mt-2 w-80 glass-strong rounded-2xl shadow-2xl shadow-cyan-950/50 overflow-hidden"
                     >
-                      <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
+                      <div className="flex items-center justify-between p-4 border-b border-cyan-100/10">
                         <h3 className="font-semibold text-white">Notifications</h3>
                         {notifications.length > 0 && (
                           <button
@@ -194,14 +194,17 @@ export function Header() {
               <div className="relative">
                 <button
                   onClick={() => setShowProfile(!showProfile)}
-                  className="flex items-center gap-2 p-2 rounded-xl hover:bg-slate-700/50 transition-colors"
+                  className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/10 transition-colors"
                 >
                   {user?.photoURL ? (
-                    <img
+                    <Image
                       src={user.photoURL}
                       alt={user.displayName || 'User'}
+                      width={32}
+                      height={32}
                       className="w-8 h-8 rounded-full object-cover"
                       referrerPolicy="no-referrer"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full gradient-bg flex items-center justify-center">
@@ -220,16 +223,19 @@ export function Header() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-56 glass-strong rounded-xl shadow-2xl overflow-hidden"
+                      className="absolute right-0 mt-2 w-56 glass-strong rounded-2xl shadow-2xl shadow-cyan-950/50 overflow-hidden"
                     >
-                      <div className="p-4 border-b border-slate-700/50">
+                      <div className="p-4 border-b border-cyan-100/10">
                         <div className="flex items-center gap-3 mb-2">
                           {user?.photoURL ? (
-                            <img
+                            <Image
                               src={user.photoURL}
                               alt={user.displayName || 'User'}
+                              width={40}
+                              height={40}
                               className="w-10 h-10 rounded-full object-cover"
                               referrerPolicy="no-referrer"
+                              unoptimized
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center">

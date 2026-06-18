@@ -18,9 +18,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={cn(
-            'w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700',
-            'text-white placeholder:text-slate-500',
-            'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary',
+            'w-full px-4 py-3 rounded-xl bg-slate-950/35 border border-slate-700/70',
+            'text-slate-100 placeholder:text-slate-500',
+            'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/70',
             'transition-all duration-200',
             error && 'border-red-500 focus:ring-red-500/50 focus:border-red-500',
             className
@@ -50,9 +50,9 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           className={cn(
-            'w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700',
-            'text-white placeholder:text-slate-500 resize-none',
-            'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary',
+            'w-full px-4 py-3 rounded-xl bg-slate-950/35 border border-slate-700/70',
+            'text-slate-100 placeholder:text-slate-500 resize-none',
+            'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/70',
             'transition-all duration-200',
             error && 'border-red-500 focus:ring-red-500/50 focus:border-red-500',
             className

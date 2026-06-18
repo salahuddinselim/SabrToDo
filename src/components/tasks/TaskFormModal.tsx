@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { CalendarDays, Flag, TextCursorInput } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -93,48 +94,66 @@ export function TaskFormModal({
       onClose={handleClose}
       title={editTask ? 'Edit Task' : 'Create New Task'}
     >
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-        <Input
-          label="Title"
-          placeholder="What needs to be done?"
-          {...register('title')}
-          error={errors.title?.message}
-        />
-
-        <Textarea
-          label="Description (optional)"
-          placeholder="Add more details..."
-          rows={3}
-          {...register('description')}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+        <div className="glass rounded-2xl p-4 space-y-4">
+          <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
+            <TextCursorInput className="w-4 h-4 text-primary" />
+            Task details
+          </div>
           <Input
-            label="Due Date"
-            type="date"
-            {...register('due_date')}
+            label="Title"
+            placeholder="What needs to be done?"
+            {...register('title')}
+            error={errors.title?.message}
           />
 
-          <Select label="Priority" {...register('priority')}>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </Select>
+          <Textarea
+            label="Description (optional)"
+            placeholder="Add more details..."
+            rows={3}
+            {...register('description')}
+          />
         </div>
 
-        <Select
-          label="Notify me"
-          {...register('notify_before', { valueAsNumber: true })}
-        >
-          <option value={0}>At due time</option>
-          <option value={5}>5 minutes before</option>
-          <option value={15}>15 minutes before</option>
-          <option value={30}>30 minutes before</option>
-          <option value={60}>1 hour before</option>
-          <option value={1440}>1 day before</option>
-        </Select>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="glass rounded-2xl p-4 space-y-3">
+            <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
+              <CalendarDays className="w-4 h-4 text-accent" />
+              Schedule
+            </div>
+            <Input
+              label="Due Date"
+              type="date"
+              {...register('due_date')}
+            />
+          </div>
 
-        <div className="flex gap-3 pt-4">
+          <div className="glass rounded-2xl p-4 space-y-3">
+            <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
+              <Flag className="w-4 h-4 text-secondary" />
+              Priority & Alert
+            </div>
+            <Select label="Priority" {...register('priority')}>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </Select>
+
+            <Select
+              label="Notify me"
+              {...register('notify_before', { valueAsNumber: true })}
+            >
+              <option value={0}>At due time</option>
+              <option value={5}>5 minutes before</option>
+              <option value={15}>15 minutes before</option>
+              <option value={30}>30 minutes before</option>
+              <option value={60}>1 hour before</option>
+              <option value={1440}>1 day before</option>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={handleClose} className="flex-1">
             Cancel
           </Button>

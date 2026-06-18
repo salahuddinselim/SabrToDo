@@ -23,7 +23,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
@@ -32,8 +32,8 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
-              'relative glass-strong rounded-2xl p-6 w-full max-w-lg',
-              'shadow-2xl shadow-black/30',
+              'relative glass-strong rounded-3xl p-6 w-full max-w-lg',
+              'shadow-2xl shadow-cyan-950/50',
               className
             )}
           >
