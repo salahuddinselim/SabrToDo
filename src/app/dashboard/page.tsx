@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -162,8 +162,13 @@ export default function DashboardPage() {
     return { completedThisWeek, totalCompleted, totalPending };
   }, [tasks]);
 
-  if (!authLoading && !user) {
-    router.push('/auth/login');
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login');
+    }
+  }, [authLoading, user, router]);
+
+  if (!user) {
     return null;
   }
 
