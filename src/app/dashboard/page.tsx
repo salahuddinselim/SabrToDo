@@ -14,6 +14,7 @@ import {
   Sparkles,
   ListTodo,
   Hourglass,
+  ArrowRight,
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -71,14 +72,10 @@ export default function DashboardPage() {
       (t) => t.status === 'completed' && new Date(t.completed_at!) >= startOfWeek
     ).length;
 
-    const completedThisMonth = tasks.filter(
-      (t) => t.status === 'completed' && new Date(t.completed_at!) >= startOfMonth
-    ).length;
-
     const totalCompleted = tasks.filter((t) => t.status === 'completed').length;
     const totalPending = tasks.filter((t) => t.status === 'pending').length;
 
-    return { completedThisWeek, completedThisMonth, totalCompleted, totalPending };
+    return { completedThisWeek, totalCompleted, totalPending };
   }, [tasks]);
 
   if (!authLoading && !user) {
@@ -116,154 +113,124 @@ export default function DashboardPage() {
         </div>
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative">
+          {/* ===== SECTION 1: ADD TASK ===== */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass rounded-2xl p-6 mb-6 relative overflow-hidden"
+            className="mb-8"
           >
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2" />
-            <div className="relative">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                    <h1 className="text-2xl font-bold text-white">
-                      Welcome back{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}
-                    </h1>
-                  </div>
-                  <p className="text-sm text-slate-400">Here&apos;s your productivity overview.</p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Plus className="w-4 h-4 text-primary" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative w-48">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <Input
-                      placeholder="Search tasks..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9 py-2 text-sm"
-                    />
-                  </div>
-                  <select
-                    value={filterPriority}
-                    onChange={(e) => setFilterPriority(e.target.value)}
-                    className="px-3 py-2 rounded-xl bg-slate-800/50 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="all">All Priority</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-                  <Button size="sm" onClick={() => setShowTaskForm(true)}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    New Task
-                  </Button>
-                </div>
+                <h2 className="text-lg font-bold text-white">Add Task</h2>
               </div>
-
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  {
-                    label: 'Due Today',
-                    value: todayTasks.length + overdueTasks.length,
-                    icon: Clock,
-                    gradient: 'from-amber-500 to-orange-500',
-                    shadow: 'shadow-amber-500/20',
-                  },
-                  {
-                    label: 'Completed',
-                    value: stats.totalCompleted,
-                    icon: CheckCircle2,
-                    gradient: 'from-emerald-500 to-green-500',
-                    shadow: 'shadow-emerald-500/20',
-                  },
-                  {
-                    label: 'Pending',
-                    value: stats.totalPending,
-                    icon: Hourglass,
-                    gradient: 'from-blue-500 to-indigo-500',
-                    shadow: 'shadow-blue-500/20',
-                  },
-                  {
-                    label: 'This Week',
-                    value: stats.completedThisWeek,
-                    icon: TrendingUp,
-                    gradient: 'from-purple-500 to-pink-500',
-                    shadow: 'shadow-purple-500/20',
-                  },
-                ].map((stat) => (
-                  <motion.div
-                    key={stat.label}
-                    whileHover={{ y: -2, scale: 1.02 }}
-                    transition={{ type: 'spring', stiffness: 300 }}
-                  >
-                    <div className={cn(
-                      'glass rounded-xl p-4 transition-all duration-200',
-                      'hover:shadow-lg hover:shadow-primary/5'
-                    )}>
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          'w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-lg',
-                          stat.gradient,
-                          stat.shadow
-                        )}>
-                          <stat.icon className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold text-white">{stat.value}</p>
-                          <p className="text-xs text-slate-400">{stat.label}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setShowTaskForm(true)}
+              >
+                Full Details
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
             </div>
+
+            <Card hover={false} className="p-4">
+              <QuickAddTask />
+            </Card>
           </motion.div>
 
-          <div className="mb-6">
-            <QuickAddTask />
-          </div>
+          {/* ===== SECTION 2: VIEW TASKS ===== */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                  <ListTodo className="w-4 h-4 text-emerald-400" />
+                </div>
+                <h2 className="text-lg font-bold text-white">Your Tasks</h2>
+                <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">
+                  {tasks.length} total
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative w-48">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    placeholder="Search tasks..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 py-2 text-sm"
+                  />
+                </div>
+                <select
+                  value={filterPriority}
+                  onChange={(e) => setFilterPriority(e.target.value)}
+                  className="px-3 py-2 rounded-xl bg-slate-800/50 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="all">All</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+            </div>
 
-          {overdueTasks.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6"
-            >
-              <Card className="border-l-4 border-l-red-500 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-xl" />
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-                      <Clock className="w-4 h-4 text-red-400" />
+            {/* Stats row */}
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              {[
+                { label: 'Due Today', value: todayTasks.length + overdueTasks.length, icon: Clock, gradient: 'from-amber-500 to-orange-500' },
+                { label: 'Completed', value: stats.totalCompleted, icon: CheckCircle2, gradient: 'from-emerald-500 to-green-500' },
+                { label: 'Pending', value: stats.totalPending, icon: Hourglass, gradient: 'from-blue-500 to-indigo-500' },
+                { label: 'This Week', value: stats.completedThisWeek, icon: TrendingUp, gradient: 'from-purple-500 to-pink-500' },
+              ].map((stat) => (
+                <motion.div key={stat.label} whileHover={{ y: -2 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <div className="glass rounded-xl p-3 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5">
+                    <div className="flex items-center gap-3">
+                      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-lg', stat.gradient)}>
+                        <stat.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-white">{stat.value}</p>
+                        <p className="text-xs text-slate-400">{stat.label}</p>
+                      </div>
                     </div>
-                    <CardTitle className="text-red-400">Overdue</CardTitle>
                   </div>
-                  <span className="text-xs text-slate-400">{overdueTasks.length} tasks past due</span>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <AnimatePresence mode="popLayout">
-                    {overdueTasks.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onToggleComplete={toggleComplete}
-                        onEdit={setEditingTask}
-                        onDelete={handleDeleteTask}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
+                </motion.div>
+              ))}
+            </div>
 
-          <div className="grid lg:grid-cols-2 gap-6 mb-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
+            {/* Overdue */}
+            {overdueTasks.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
+                <Card className="border-l-4 border-l-red-500 overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-xl" />
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-red-400" />
+                      </div>
+                      <CardTitle className="text-red-400">Overdue</CardTitle>
+                    </div>
+                    <span className="text-xs text-slate-400">{overdueTasks.length} tasks past due</span>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <AnimatePresence mode="popLayout">
+                      {overdueTasks.map((task) => (
+                        <TaskCard key={task.id} task={task} onToggleComplete={toggleComplete} onEdit={setEditingTask} onDelete={handleDeleteTask} />
+                      ))}
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Today + Upcoming */}
+            <div className="grid lg:grid-cols-2 gap-6 mb-4">
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-2">
@@ -287,26 +254,14 @@ export default function DashboardPage() {
                     <div className="space-y-2">
                       <AnimatePresence mode="popLayout">
                         {todayTasks.map((task) => (
-                          <TaskCard
-                            key={task.id}
-                            task={task}
-                            onToggleComplete={toggleComplete}
-                            onEdit={setEditingTask}
-                            onDelete={handleDeleteTask}
-                          />
+                          <TaskCard key={task.id} task={task} onToggleComplete={toggleComplete} onEdit={setEditingTask} onDelete={handleDeleteTask} />
                         ))}
                       </AnimatePresence>
                     </div>
                   )}
                 </CardContent>
               </Card>
-            </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-2">
@@ -330,81 +285,59 @@ export default function DashboardPage() {
                     <div className="space-y-2">
                       <AnimatePresence mode="popLayout">
                         {upcomingTasks.map((task) => (
-                          <TaskCard
-                            key={task.id}
-                            task={task}
-                            onToggleComplete={toggleComplete}
-                            onEdit={setEditingTask}
-                            onDelete={handleDeleteTask}
-                          />
+                          <TaskCard key={task.id} task={task} onToggleComplete={toggleComplete} onEdit={setEditingTask} onDelete={handleDeleteTask} />
                         ))}
                       </AnimatePresence>
                     </div>
                   )}
                 </CardContent>
               </Card>
-            </motion.div>
-          </div>
+            </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <button
-              onClick={() => setShowCompleted(!showCompleted)}
-              className="w-full flex items-center justify-between p-4 glass rounded-xl hover:bg-slate-800/50 transition-all group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                </div>
-                <div className="text-left">
-                  <span className="text-sm font-medium text-white">
-                    Completed Tasks
-                  </span>
-                  <p className="text-xs text-slate-500">{completedTasks.length} tasks</p>
-                </div>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'w-5 h-5 text-slate-400 transition-transform duration-200',
-                  showCompleted && 'rotate-180'
-                )}
-              />
-            </button>
-
-            <AnimatePresence>
-              {showCompleted && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="pt-3 space-y-2">
-                    {completedTasks.length === 0 ? (
-                      <div className="glass rounded-xl p-6 text-center">
-                        <p className="text-sm text-slate-400">No completed tasks yet</p>
-                      </div>
-                    ) : (
-                      <AnimatePresence mode="popLayout">
-                        {completedTasks.map((task) => (
-                          <TaskCard
-                            key={task.id}
-                            task={task}
-                            onToggleComplete={toggleComplete}
-                            onEdit={setEditingTask}
-                            onDelete={handleDeleteTask}
-                          />
-                        ))}
-                      </AnimatePresence>
-                    )}
+            {/* Completed */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <button
+                onClick={() => setShowCompleted(!showCompleted)}
+                className="w-full flex items-center justify-between p-4 glass rounded-xl hover:bg-slate-800/50 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <div className="text-left">
+                    <span className="text-sm font-medium text-white">Completed Tasks</span>
+                    <p className="text-xs text-slate-500">{completedTasks.length} tasks</p>
+                  </div>
+                </div>
+                <ChevronDown className={cn('w-5 h-5 text-slate-400 transition-transform duration-200', showCompleted && 'rotate-180')} />
+              </button>
+
+              <AnimatePresence>
+                {showCompleted && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-3 space-y-2">
+                      {completedTasks.length === 0 ? (
+                        <div className="glass rounded-xl p-6 text-center">
+                          <p className="text-sm text-slate-400">No completed tasks yet</p>
+                        </div>
+                      ) : (
+                        <AnimatePresence mode="popLayout">
+                          {completedTasks.map((task) => (
+                            <TaskCard key={task.id} task={task} onToggleComplete={toggleComplete} onEdit={setEditingTask} onDelete={handleDeleteTask} />
+                          ))}
+                        </AnimatePresence>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           </motion.div>
         </div>
       </main>
