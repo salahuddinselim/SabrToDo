@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { appendRow, getAllRows, updateRowByColumn } from '@/lib/sheets';
 import { requireAuthForRequest, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
+import { userSchema } from '@/lib/validation';
 
 interface UserResponse {
   id: string;
@@ -21,14 +22,16 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuthForRequest(request);
     const body = await request.json();
-    const { email, displayName } = body;
 
-    if (!email) {
+    const parsed = userSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'email is required' },
+        { error: parsed.error.errors[0]?.message || 'Invalid input' },
         { status: 400 }
       );
     }
+
+    const { email, displayName } = parsed.data;
 
     const users = await getAllRows('users');
     const existing = users.find((u) => u.firebase_uid === user.id);

@@ -17,7 +17,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { useTasks } from '@/hooks/useTasks';
-import { cn, formatRelativeTime } from '@/lib/utils';
+import { cn, formatRelativeTime, sanitize } from '@/lib/utils';
 import { TaskFormModal } from '@/components/tasks/TaskFormModal';
 import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/ui/Logo';
@@ -168,11 +168,11 @@ export function Header() {
                               {getNotificationIcon(notification.type)}
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm text-white font-medium">
-                                  {notification.title}
+                                  {sanitize(notification.title)}
                                 </p>
                                 {notification.message && (
                                   <p className="text-xs text-slate-400 mt-0.5">
-                                    {notification.message}
+                                    {sanitize(notification.message)}
                                   </p>
                                 )}
                                 <p className="text-xs text-slate-500 mt-1">

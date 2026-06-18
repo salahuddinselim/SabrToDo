@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, appendRow } from '@/lib/sheets';
 import { requireAuthForRequest, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
+import { taskSchema } from '@/lib/validation';
 
 interface TaskResponse {
   id: string;
@@ -56,14 +57,16 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuthForRequest(request);
     const body = await request.json();
-    const { title, description, due_date, priority, status, notify_before } = body;
 
-    if (!title) {
+    const parsed = taskSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'title is required' },
+        { error: parsed.error.errors[0]?.message || 'Invalid input' },
         { status: 400 }
       );
     }
+
+    const { title, description, due_date, priority, status, notify_before } = parsed.data;
 
     const tasks = await getAllRows('tasks');
     const maxOrder = tasks

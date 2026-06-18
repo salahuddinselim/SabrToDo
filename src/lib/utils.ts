@@ -80,6 +80,40 @@ export function truncate(str: string, length: number): string {
   return str.substring(0, length) + '...';
 }
 
+const INJECTION_PATTERNS = [
+  /<script[\s>]/i,
+  /javascript\s*:/i,
+  /\bon\w+\s*=/i,
+  /data\s*:\s*text\s*\/\s*html/i,
+  /<embed[\s>]/i,
+  /<object[\s>]/i,
+  /<iframe[\s>]/i,
+  /<frame[\s>]/i,
+  /<form[\s>]/i,
+  /<svg[\s>]/i,
+  /<style[\s>]/i,
+  /<link[\s>]/i,
+  /<base[\s>]/i,
+  /vbscript\s*:/i,
+  /&#/i,
+  /\\u003c/i,
+  /\\x3c/i,
+  /\0/i,
+];
+
+export function containsInjectionPatterns(value: string): boolean {
+  return INJECTION_PATTERNS.some((pattern) => pattern.test(value));
+}
+
+export function sanitize(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number

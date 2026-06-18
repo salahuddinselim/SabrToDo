@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, appendRow } from '@/lib/sheets';
 import { requireAuthForRequest, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
+import { notificationSchema } from '@/lib/validation';
 
 interface NotificationResponse {
   id: string;
@@ -50,14 +51,16 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuthForRequest(request);
     const body = await request.json();
-    const { type, title, message, task_id } = body;
 
-    if (!type || !title) {
+    const parsed = notificationSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'type and title are required' },
+        { error: parsed.error.errors[0]?.message || 'Invalid input' },
         { status: 400 }
       );
     }
+
+    const { type, title, message, task_id } = parsed.data;
 
     const now = new Date().toISOString();
     const notification = {

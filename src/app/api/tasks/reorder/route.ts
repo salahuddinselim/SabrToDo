@@ -1,21 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, updateMultipleRows } from '@/lib/sheets';
 import { requireAuthForRequest, requireOwnership, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
+import { reorderSchema } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuthForRequest(request);
-    const { taskIds } = await request.json();
+    const body = await request.json();
 
-    if (!taskIds) {
+    const parsed = reorderSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'taskIds is required' },
+        { error: parsed.error.errors[0]?.message || 'Invalid input' },
         { status: 400 }
       );
     }
 
+    const { taskIds } = parsed.data;
+
     const tasks = await getAllRows('tasks');
-    const updates = taskIds.map((id: string, index: number) => {
+    const updates = taskIds.map((id, index) => {
       const task = tasks.find((t) => t.id === id);
       if (!task) return null;
       requireOwnership(user.id, task.user_id);

@@ -11,7 +11,7 @@ import {
   GripVertical,
 } from 'lucide-react';
 import { Task } from '@/types';
-import { cn, formatDate, getDueDateStatus } from '@/lib/utils';
+import { cn, formatDate, getDueDateStatus, sanitize } from '@/lib/utils';
 
 interface TaskCardProps {
   task: Task;
@@ -84,7 +84,7 @@ export function TaskCard({
               isCompleted && 'line-through text-slate-400'
             )}
           >
-            {task.title}
+              {sanitize(task.title)}
           </h4>
 
           {task.description && (

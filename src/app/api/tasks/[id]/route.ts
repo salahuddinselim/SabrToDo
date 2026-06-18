@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, updateRowByColumn, deleteRowByColumn } from '@/lib/sheets';
 import { requireAuthForRequest, requireOwnership, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
+import { taskUpdateSchema } from '@/lib/validation';
 
 interface TaskResponse {
   id: string;
@@ -36,7 +37,15 @@ export async function PATCH(
 ) {
   try {
     const user = await requireAuthForRequest(request);
-    const updates = await request.json();
+    const body = await request.json();
+
+    const parsed = taskUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.errors[0]?.message || 'Invalid input' },
+        { status: 400 }
+      );
+    }
 
     const tasks = await getAllRows('tasks');
     const task = tasks.find((t) => t.id === params.id);
@@ -47,7 +56,11 @@ export async function PATCH(
 
     requireOwnership(user.id, task.user_id);
 
-    const updated = { ...task, ...updates, user_id: task.user_id };
+    const updateData: Record<string, string> = {};
+    for (const [key, value] of Object.entries(parsed.data)) {
+      updateData[key] = String(value);
+    }
+    const updated = { ...task, ...updateData, user_id: task.user_id };
     await updateRowByColumn('tasks', 'id', params.id, updated);
 
     const updatedTasks = await getAllRows('tasks');
