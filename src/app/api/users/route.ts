@@ -1,7 +1,21 @@
 import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { appendRow, getAllRows, updateRowByColumn } from '@/lib/sheets';
-import { requireAuthForRequest, handleApiError } from '@/lib/api-auth';
+import { requireAuthForRequest, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
+
+interface UserResponse {
+  id: string;
+  email: string;
+  display_name: string;
+}
+
+function toUserResponse(row: Record<string, string>): UserResponse {
+  return {
+    id: row.id,
+    email: row.email,
+    display_name: row.display_name || '',
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,20 +42,23 @@ export async function POST(request: NextRequest) {
       });
       const updated = await getAllRows('users');
       const result = updated.find((u) => u.firebase_uid === user.id);
-      return NextResponse.json(result);
+      const response = NextResponse.json(result ? toUserResponse(result) : null);
+      return addRateLimitHeaders(response, user.id);
     }
 
+    const now = new Date().toISOString();
     const newUser = {
       id: randomUUID(),
       firebase_uid: user.id,
       email,
       display_name: displayName || '',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
     };
 
     await appendRow('users', newUser);
-    return NextResponse.json(newUser, { status: 201 });
+    const response = NextResponse.json(toUserResponse(newUser), { status: 201 });
+    return addRateLimitHeaders(response, user.id);
   } catch (error) {
     return handleApiError(error);
   }

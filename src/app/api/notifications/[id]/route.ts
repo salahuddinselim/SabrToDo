@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, updateRowByColumn } from '@/lib/sheets';
-import { requireAuthForRequest, requireOwnership, handleApiError } from '@/lib/api-auth';
+import { requireAuthForRequest, requireOwnership, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
 
 export async function PATCH(
   request: NextRequest,
@@ -26,7 +26,8 @@ export async function PATCH(
       is_read: 'true',
     });
 
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+    return addRateLimitHeaders(response, user.id);
   } catch (error) {
     return handleApiError(error);
   }

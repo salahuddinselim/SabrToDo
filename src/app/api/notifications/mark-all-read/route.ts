@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, updateMultipleRows } from '@/lib/sheets';
-import { requireAuthForRequest, handleApiError } from '@/lib/api-auth';
+import { requireAuthForRequest, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
     );
 
     if (unread.length === 0) {
-      return NextResponse.json({ success: true });
+      const response = NextResponse.json({ success: true });
+      return addRateLimitHeaders(response, user.id);
     }
 
     const updates = unread.map((n) => ({
@@ -21,7 +22,8 @@ export async function POST(request: NextRequest) {
     }));
 
     await updateMultipleRows('notifications', 'id', updates);
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+    return addRateLimitHeaders(response, user.id);
   } catch (error) {
     return handleApiError(error);
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { validateCSRFToken } from '@/lib/csrf';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 interface AuthUser {
   id: string;
@@ -34,13 +35,28 @@ export function requireOwnership(sessionUserId: string, resourceUserId: string):
 
 export async function requireAuthForRequest(request: Request): Promise<AuthUser> {
   const user = await requireAuth();
-  const csrfToken = request.headers.get('x-csrf-token');
+
+  const rateLimit = checkRateLimit(user.id);
+  if (!rateLimit.allowed) {
+    throw new ApiError(429, `Rate limit exceeded. Try again in ${Math.ceil((rateLimit.resetAt - Date.now()) / 1000)} seconds.`);
+  }
+
   if (request.method !== 'GET' && request.method !== 'HEAD') {
+    const csrfToken = request.headers.get('x-csrf-token');
     if (!csrfToken || !validateCSRFToken(csrfToken, user.id)) {
       throw new ApiError(403, 'Invalid or missing CSRF token');
     }
   }
+
   return user;
+}
+
+export function addRateLimitHeaders(response: NextResponse, userId: string): NextResponse {
+  const rateLimit = checkRateLimit(userId);
+  response.headers.set('X-RateLimit-Limit', String(60));
+  response.headers.set('X-RateLimit-Remaining', String(rateLimit.remaining));
+  response.headers.set('X-RateLimit-Reset', String(Math.ceil(rateLimit.resetAt / 1000)));
+  return response;
 }
 
 export class ApiError extends Error {

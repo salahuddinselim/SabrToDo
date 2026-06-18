@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, updateRowByColumn, deleteRowByColumn } from '@/lib/sheets';
-import { requireAuthForRequest, requireOwnership, handleApiError } from '@/lib/api-auth';
+import { requireAuthForRequest, requireOwnership, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
+
+interface TaskResponse {
+  id: string;
+  title: string;
+  description: string;
+  due_date: string;
+  priority: string;
+  status: string;
+  notify_before: number;
+  created_at: string;
+  completed_at: string;
+  order_index: number;
+}
+
+function toTaskResponse(row: Record<string, string>): TaskResponse {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description || '',
+    due_date: row.due_date || '',
+    priority: row.priority || 'medium',
+    status: row.status || 'pending',
+    notify_before: Number(row.notify_before ?? 15),
+    created_at: row.created_at,
+    completed_at: row.completed_at || '',
+    order_index: Number(row.order_index || 0),
+  };
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -24,7 +52,8 @@ export async function PATCH(
 
     const updatedTasks = await getAllRows('tasks');
     const result = updatedTasks.find((t) => t.id === params.id);
-    return NextResponse.json(result);
+    const response = NextResponse.json(result ? toTaskResponse(result) : null);
+    return addRateLimitHeaders(response, user.id);
   } catch (error) {
     return handleApiError(error);
   }
@@ -47,7 +76,8 @@ export async function DELETE(
     requireOwnership(user.id, task.user_id);
 
     await deleteRowByColumn('tasks', 'id', params.id);
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+    return addRateLimitHeaders(response, user.id);
   } catch (error) {
     return handleApiError(error);
   }

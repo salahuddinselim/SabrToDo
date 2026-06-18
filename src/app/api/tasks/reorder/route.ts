@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRows, updateMultipleRows } from '@/lib/sheets';
-import { requireAuthForRequest, requireOwnership, handleApiError } from '@/lib/api-auth';
+import { requireAuthForRequest, requireOwnership, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
     }).filter(Boolean) as Array<{ matchValue: string; data: Record<string, string> }>;
 
     await updateMultipleRows('tasks', 'id', updates);
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+    return addRateLimitHeaders(response, user.id);
   } catch (error) {
     return handleApiError(error);
   }
