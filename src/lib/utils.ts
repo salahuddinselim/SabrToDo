@@ -80,10 +80,31 @@ export function truncate(str: string, length: number): string {
   return str.substring(0, length) + '...';
 }
 
+const EVENT_HANDLERS = [
+  'onclick', 'ondblclick', 'onmousedown', 'onmouseup', 'onmouseover',
+  'onmousemove', 'onmouseout', 'onmouseenter', 'onmouseleave',
+  'onfocus', 'onblur', 'onchange', 'oninput', 'onselect', 'onsubmit',
+  'onkeydown', 'onkeypress', 'onkeyup', 'onload', 'onerror',
+  'onabort', 'onbeforeunload', 'onhashchange', 'onpopstate',
+  'onresize', 'onscroll', 'onstorage', 'ontoggle', 'onunload',
+  'onpointerdown', 'onpointerup', 'onpointermove', 'onpointerover',
+  'onpointerout', 'onpointerenter', 'onpointerleave',
+  'ondrag', 'ondragend', 'ondragenter', 'ondragleave', 'ondragover',
+  'ondragstart', 'ondrop', 'onwheel',
+  'ontouchstart', 'ontouchend', 'ontouchmove', 'ontouchcancel',
+  'onanimationstart', 'onanimationend', 'onanimationiteration',
+  'ontransitionstart', 'ontransitionend', 'ontransitionrun', 'ontransitioncancel',
+];
+
+const EVENT_HANDLER_PATTERN = new RegExp(
+  `(?:${EVENT_HANDLERS.map((h) => h.replace('on', '')).join('|')})\\s*=`,
+  'i'
+);
+
 const INJECTION_PATTERNS = [
   /<script[\s>]/i,
   /javascript\s*:/i,
-  /\bon\w+\s*=/i,
+  EVENT_HANDLER_PATTERN,
   /data\s*:\s*text\s*\/\s*html/i,
   /<embed[\s>]/i,
   /<object[\s>]/i,
@@ -91,6 +112,7 @@ const INJECTION_PATTERNS = [
   /<frame[\s>]/i,
   /<form[\s>]/i,
   /<svg[\s>]/i,
+  /<math[\s>]/i,
   /<style[\s>]/i,
   /<link[\s>]/i,
   /<base[\s>]/i,

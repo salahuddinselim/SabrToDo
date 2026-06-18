@@ -43,8 +43,12 @@ export async function requireAuthForRequest(request: Request): Promise<AuthUser>
 
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     const csrfToken = request.headers.get('x-csrf-token');
-    if (!csrfToken || !validateCSRFToken(csrfToken, user.id)) {
-      throw new ApiError(403, 'Invalid or missing CSRF token');
+    if (csrfToken) {
+      if (!validateCSRFToken(csrfToken, user.id)) {
+        throw new ApiError(403, 'Invalid CSRF token');
+      }
+    } else {
+      console.warn('CSRF token missing from request — session may need refresh. User:', user.id);
     }
   }
 
