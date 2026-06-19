@@ -40,6 +40,13 @@ export interface TaskFormData {
   notify_before: number;
 }
 
+export interface UserSettings {
+  daily_goal: number;
+  selected_theme: string;
+  notif_states: Record<string, boolean>;
+  sec_states: Record<string, boolean>;
+}
+
 export interface AuthUser {
   uid: string;
   email: string | null;

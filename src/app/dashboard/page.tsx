@@ -19,11 +19,12 @@ import { useTasks } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/useToast';
 import { Task, TaskFormData } from '@/types';
 import { isToday, isUpcoming, isOverdue, cn } from '@/lib/utils';
+import { playAlarm, isAlarmEnabled } from '@/lib/alarm';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { tasks, addTask, editTask, removeTask, toggleComplete } = useTasks();
+  const { tasks, loading, error, addTask, editTask, removeTask, toggleComplete, refreshTasks } = useTasks();
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
@@ -195,7 +196,11 @@ export default function DashboardPage() {
 
   const handleToggleTask = async (id: string) => {
     setAnimatingChecks((prev) => ({ ...prev, [id]: true }));
+    const task = tasks.find((t) => t.id === id);
     await toggleComplete(id);
+    if (task && task.priority === 'high' && isAlarmEnabled()) {
+      playAlarm();
+    }
     setTimeout(() => {
       setAnimatingChecks((prev) => ({ ...prev, [id]: false }));
     }, 300);
@@ -272,7 +277,37 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center py-16">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-accent-blue/30 border-t-accent-blue rounded-full animate-spin" />
+                <p className="text-[13px] text-ink-muted">Loading your tasks...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="bg-accent-red/5 border border-accent-red/20 rounded-[14px] p-4 md:p-5 mb-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-[18px] h-[18px] text-accent-red shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-accent-red">Failed to load tasks</p>
+                  <p className="text-[12px] text-ink-dim mt-1">{error}</p>
+                  <button
+                    onClick={refreshTasks}
+                    className="mt-3 text-[12px] font-medium text-accent-blue hover:text-accent-blue/80 transition-colors"
+                  >
+                    Try again
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Stats Grid */}
+          {!loading && (
           <div className="grid grid-cols-2 max-[480px]:grid-cols-1 xl:grid-cols-4 gap-[14px] mb-4 md:mb-5">
             {/* Total Tasks */}
             <div className="group bg-surface border border-white/10 rounded-[14px] p-[14px] transition-all duration-150 hover:-translate-y-0.5">
@@ -336,6 +371,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+          )}
 
           {/* Main Dashboard Layout */}
           <div className="grid gap-4 lg:grid-cols-[1fr_320px] items-start">

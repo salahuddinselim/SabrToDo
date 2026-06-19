@@ -1,7 +1,7 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -26,6 +26,7 @@ const sectionLabels: Record<string, string> = {
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const [avatarError, setAvatarError] = useState(false);
 
   const isActive = (href: string) => pathname === href;
 
@@ -90,15 +91,13 @@ export function Sidebar() {
           href="/settings"
           className="flex items-center justify-center md:justify-start md:gap-3 px-0 md:px-[9px] py-[10px] rounded-[10px] hover:bg-bg-hover transition-colors min-tap"
         >
-          {user?.photoURL ? (
-            <Image
+          {user?.photoURL && !avatarError ? (
+            <img
               src={user.photoURL}
               alt={user.displayName || 'User'}
-              width={32}
-              height={32}
               className="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-accent-blue/20"
               referrerPolicy="no-referrer"
-              unoptimized
+              onError={() => setAvatarError(true)}
             />
           ) : (
             <div className="w-8 h-8 rounded-full gradient-bg flex items-center justify-center shrink-0">

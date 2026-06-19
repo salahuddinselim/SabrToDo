@@ -5,6 +5,7 @@ const SHEET_NAMES = {
   tasks: 'tasks',
   notifications: 'notifications',
   push_subscriptions: 'push_subscriptions',
+  settings: 'settings',
 } as const;
 
 type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES];
@@ -43,6 +44,9 @@ const HEADERS: Record<SheetName, string[]> = {
   ],
   push_subscriptions: [
     'id', 'user_id', 'endpoint', 'subscription', 'created_at',
+  ],
+  settings: [
+    'id', 'user_id', 'daily_goal', 'selected_theme', 'notif_states', 'sec_states', 'updated_at',
   ],
 };
 

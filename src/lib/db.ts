@@ -1,4 +1,4 @@
-import { Task, User, Notification, TaskFormData } from '@/types';
+import { Task, User, Notification, TaskFormData, UserSettings } from '@/types';
 
 const BASE = '/api';
 
@@ -120,6 +120,21 @@ export const markAllNotificationsAsRead = async (
   await request(`${BASE}/notifications/mark-all-read`, {
     method: 'POST',
     body: JSON.stringify({ userId }),
+    csrfToken,
+  });
+};
+
+export const getSettings = async (csrfToken?: string): Promise<UserSettings> => {
+  return request(`${BASE}/settings`, { csrfToken });
+};
+
+export const updateSettings = async (
+  settings: Partial<UserSettings>,
+  csrfToken?: string
+): Promise<UserSettings> => {
+  return request(`${BASE}/settings`, {
+    method: 'PATCH',
+    body: JSON.stringify(settings),
     csrfToken,
   });
 };

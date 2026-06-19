@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -18,38 +18,142 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 import { subscribeToPush, unsubscribeFromPush } from '@/lib/push';
+import { playAlarm, isAlarmEnabled, setAlarmEnabled } from '@/lib/alarm';
+import { getSettings, updateSettings, createOrUpdateUser } from '@/lib/db';
 
 type Section = 'profile' | 'themes' | 'notifications' | 'security';
 
-const themes = [
-  {
-    id: 'ocean',
+const SETTINGS_KEY = 'todo-app-settings';
+
+interface ThemeVars {
+  '--bg-base': string;
+  '--bg-surface': string;
+  '--bg-raised': string;
+  '--bg-hover': string;
+  '--accent-blue': string;
+  '--accent-green': string;
+  '--accent-red': string;
+  '--accent-yellow': string;
+  '--accent-purple': string;
+}
+
+const themeConfigs: Record<string, { name: string; desc: string; swatches: string[]; vars: ThemeVars }> = {
+  ocean: {
     name: 'Ocean Midnight',
     desc: 'Calm deep-sea focus',
     swatches: ['#0d0f14', '#6c8fff', '#3ecf8e'],
+    vars: {
+      '--bg-base': '#0d0f14',
+      '--bg-surface': '#13161d',
+      '--bg-raised': '#1a1e28',
+      '--bg-hover': '#222736',
+      '--accent-blue': '#6c8fff',
+      '--accent-green': '#3ecf8e',
+      '--accent-red': '#f87171',
+      '--accent-yellow': '#fbbf24',
+      '--accent-purple': '#a78bfa',
+    },
   },
-  {
-    id: 'solar',
+  solar: {
     name: 'Solar Eclipse',
     desc: 'Warm intense energy',
     swatches: ['#1a0a00', '#fbbf24', '#f87171'],
+    vars: {
+      '--bg-base': '#1a0a00',
+      '--bg-surface': '#221205',
+      '--bg-raised': '#2e1a0a',
+      '--bg-hover': '#3d2612',
+      '--accent-blue': '#fbbf24',
+      '--accent-green': '#f87171',
+      '--accent-red': '#fb923c',
+      '--accent-yellow': '#fbbf24',
+      '--accent-purple': '#fbbf24',
+    },
   },
-  {
-    id: 'amethyst',
+  amethyst: {
     name: 'Amethyst Obsidian',
     desc: 'Creative deep flow',
     swatches: ['#0a0514', '#a78bfa', '#c084fc'],
+    vars: {
+      '--bg-base': '#0a0514',
+      '--bg-surface': '#100a1e',
+      '--bg-raised': '#1a122e',
+      '--bg-hover': '#261a3e',
+      '--accent-blue': '#a78bfa',
+      '--accent-green': '#c084fc',
+      '--accent-red': '#e879f9',
+      '--accent-yellow': '#a78bfa',
+      '--accent-purple': '#c084fc',
+    },
   },
-  {
-    id: 'emerald',
+  emerald: {
     name: 'Emerald Midnight',
     desc: 'Balanced natural calm',
     swatches: ['#021a0f', '#3ecf8e', '#6ee7b7'],
+    vars: {
+      '--bg-base': '#021a0f',
+      '--bg-surface': '#052314',
+      '--bg-raised': '#0a2e1b',
+      '--bg-hover': '#123d26',
+      '--accent-blue': '#3ecf8e',
+      '--accent-green': '#6ee7b7',
+      '--accent-red': '#34d399',
+      '--accent-yellow': '#3ecf8e',
+      '--accent-purple': '#6ee7b7',
+    },
   },
-];
+};
+
+const themes = Object.entries(themeConfigs).map(([id, t]) => ({
+  id,
+  name: t.name,
+  desc: t.desc,
+  swatches: t.swatches,
+}));
+
+interface SavedSettings {
+  displayName: string;
+  dailyGoal: number;
+  selectedTheme: string;
+  notifStates: Record<string, boolean>;
+  secStates: Record<string, boolean>;
+}
+
+const defaultSettings: SavedSettings = {
+  displayName: '',
+  dailyGoal: 5,
+  selectedTheme: 'ocean',
+  notifStates: { push: true, alarm: true, digest: false, overdue: true, goal: true, report: false },
+  secStates: { timeout: true, login: true, audit: false },
+};
+
+function loadSettings(): SavedSettings {
+  if (typeof window === 'undefined') return { ...defaultSettings };
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) return { ...defaultSettings, ...JSON.parse(raw) };
+  } catch {}
+  return { ...defaultSettings };
+}
+
+function saveSettings(s: SavedSettings) {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  } catch {}
+}
+
+function applyTheme(themeId: string) {
+  const config = themeConfigs[themeId];
+  if (!config) return;
+  const root = document.documentElement;
+  for (const [key, val] of Object.entries(config.vars)) {
+    root.style.setProperty(key, val);
+  }
+}
 
 const notifSettings = [
   { id: 'push', label: 'Push alerts', desc: 'Receive real-time browser notifications for task updates' },
+  { id: 'alarm', label: 'Alarm sound', desc: 'Play an audible alarm for high-priority and overdue tasks' },
   { id: 'digest', label: 'Daily digest', desc: 'Get a summary of your tasks and progress every morning' },
   { id: 'overdue', label: 'Overdue reminders', desc: 'Gentle nudges when tasks are past their due date' },
   { id: 'goal', label: 'Goal celebration', desc: 'A little boost when you hit your daily completion target' },
@@ -71,23 +175,63 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState('');
   const [dailyGoal, setDailyGoal] = useState(5);
   const [selectedTheme, setSelectedTheme] = useState('ocean');
-  const [notifStates, setNotifStates] = useState<Record<string, boolean>>({
-    push: true,
-    digest: false,
-    overdue: true,
-    goal: true,
-    report: false,
-  });
-  const [secStates, setSecStates] = useState<Record<string, boolean>>({
-    timeout: true,
-    login: true,
-    audit: false,
-  });
+  const [notifStates, setNotifStates] = useState<Record<string, boolean>>(defaultSettings.notifStates);
+  const [secStates, setSecStates] = useState<Record<string, boolean>>(defaultSettings.secStates);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
+  // Fetch settings from server on mount
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const s = await getSettings(user.csrfToken);
+        setDailyGoal(s.daily_goal);
+        setSelectedTheme(s.selected_theme);
+        setNotifStates(s.notif_states);
+        setSecStates(s.sec_states);
+        applyTheme(s.selected_theme);
+      } catch {
+        // fallback to cached localStorage
+        const cached = loadSettings();
+        setDailyGoal(cached.dailyGoal);
+        setSelectedTheme(cached.selectedTheme);
+        setNotifStates(cached.notifStates);
+        setSecStates(cached.secStates);
+        applyTheme(cached.selectedTheme);
+      }
+      setSettingsLoaded(true);
+    })();
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Hydrate displayName from user
   useEffect(() => {
     if (user?.displayName) setDisplayName(user.displayName);
   }, [user]);
+
+  // Re-apply theme whenever it changes
+  useEffect(() => {
+    if (settingsLoaded) applyTheme(selectedTheme);
+  }, [selectedTheme, settingsLoaded]);
+
+  // Persist to localStorage as cache
+  const cacheLocally = useCallback(() => {
+    saveSettings({ displayName, dailyGoal, selectedTheme, notifStates, secStates });
+  }, [displayName, dailyGoal, selectedTheme, notifStates, secStates]);
+
+  useEffect(() => {
+    if (settingsLoaded) cacheLocally();
+  }, [cacheLocally, settingsLoaded]);
+
+  // Sync state to server
+  const syncToServer = useCallback(async () => {
+    if (!user) return;
+    try {
+      await updateSettings({ daily_goal: dailyGoal, selected_theme: selectedTheme, notif_states: notifStates, sec_states: secStates }, user.csrfToken);
+    } catch {
+      // silently fail — local state is already updated
+    }
+  }, [user, dailyGoal, selectedTheme, notifStates, secStates]);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
@@ -133,16 +277,37 @@ export default function SettingsPage() {
       return;
     }
 
+    if (id === 'alarm') {
+      setAlarmEnabled(next);
+      if (next) playAlarm();
+      await syncToServer();
+      toast.success(next ? 'Alarm sound enabled' : 'Alarm sound disabled');
+      return;
+    }
+
+    await syncToServer();
     toast.success('Notification preference updated');
   };
 
-  const toggleSec = (id: string) => {
-    setSecStates((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleSec = async (id: string) => {
+    const next = !secStates[id];
+    setSecStates((prev) => ({ ...prev, [id]: next }));
+    await syncToServer();
     toast.success('Security setting updated');
   };
 
-  const handleSaveProfile = () => {
-    toast.success('Profile saved successfully');
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    try {
+      await Promise.all([
+        updateSettings({ daily_goal: dailyGoal, selected_theme: selectedTheme, notif_states: notifStates, sec_states: secStates }, user.csrfToken),
+        createOrUpdateUser(user.uid, user.email || '', displayName || user.displayName || undefined, user.csrfToken),
+      ]);
+      cacheLocally();
+      toast.success('Profile saved successfully');
+    } catch {
+      toast.error('Failed to save to server');
+    }
   };
 
   const handleDeleteAll = () => {
@@ -346,7 +511,7 @@ export default function SettingsPage() {
                     return (
                       <button
                         key={theme.id}
-                        onClick={() => setSelectedTheme(theme.id)}
+                        onClick={async () => { setSelectedTheme(theme.id); await syncToServer(); }}
                         className={cn(
                           'relative rounded-[10px] p-3.5 border-2 transition-all duration-150 text-left',
                           isSelected
@@ -461,7 +626,7 @@ export default function SettingsPage() {
                 </div>
 
                 <button
-                  onClick={() => toast.success('Settings saved')}
+                  onClick={async () => { await syncToServer(); toast.success('Settings saved'); }}
                   className="flex items-center gap-1.5 bg-accent-blue text-white text-[13px] font-medium rounded-[9px] px-4 py-2 transition-all duration-150 hover:opacity-85 active:scale-[0.97]"
                 >
                   <Check className="w-4 h-4" />
