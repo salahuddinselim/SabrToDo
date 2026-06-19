@@ -117,7 +117,7 @@ export function Sidebar() {
         <button
           onClick={() => logout()}
           className="flex items-center justify-center md:justify-start md:gap-3 px-0 md:px-[9px] py-[10px] rounded-[10px] text-placeholder hover:text-accent-red hover:bg-bg-hover transition-colors min-tap mt-1"
-          title="Sign out"
+          aria-label="Sign out"
         >
           <LogOut className="w-[17px] h-[17px] shrink-0" />
           <span className="hidden md:block text-[13px]">Sign out</span>

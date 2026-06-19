@@ -712,6 +712,7 @@ export default function DashboardPage() {
                     }
                   }}
                   placeholder="What needs to get done?"
+                  name="quick-capture"
                   className="w-full bg-raised border border-white/10 rounded-[9px] px-3 py-2.5 text-[13px] text-primary placeholder:text-ink-dim resize-none outline-none transition-colors duration-150 focus:border-accent-blue"
                 />
                 <div className="flex items-center gap-2 mt-2.5">
@@ -719,6 +720,7 @@ export default function DashboardPage() {
                     value={quickCapturePriority}
                     onChange={(e) => setQuickCapturePriority(e.target.value)}
                     className="flex-1 bg-raised border border-white/10 rounded-[9px] px-3 py-2 text-[12px] text-primary outline-none appearance-none cursor-pointer transition-colors duration-150 focus:border-accent-blue"
+                    aria-label="Priority"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>

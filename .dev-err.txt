@@ -245,3 +245,34 @@ Error:
 
 Import trace for requested module:
 ./src/app/settings/page.tsx
+ ⨯ ./src/app/dashboard/page.tsx
+Error: 
+  [31mx[0m Expression expected
+     ,-[[36;1;4mC:\Users\User\Desktop\To-Do App\src\app\dashboard\page.tsx[0m:245:1]
+ [2m245[0m |   );
+ [2m246[0m | 
+ [2m247[0m |   return (
+ [2m248[0m |     <>
+     : [31;1m     ^[0m
+ [2m249[0m |     <AppLayout decoration={decorations}>
+ [2m250[0m |           
+ [2m251[0m |           {/* Greeting Row */}
+     `----
+
+  [31mx[0m Expected corresponding JSX closing tag for <div>
+     ,-[[36;1;4mC:\Users\User\Desktop\To-Do App\src\app\dashboard\page.tsx[0m:782:1]
+ [2m782[0m |             </div>
+ [2m783[0m |           </div>
+ [2m784[0m | 
+ [2m785[0m |     </AppLayout>
+     : [31;1m    ^^^^^^^^^^^^[0m
+ [2m786[0m | 
+ [2m787[0m |       <TaskFormModal
+ [2m788[0m |         isOpen={showTaskForm || editingTask !== null}
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/dashboard/page.tsx

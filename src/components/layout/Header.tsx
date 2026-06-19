@@ -78,6 +78,7 @@ export function Header() {
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="w-[34px] h-[34px] md:w-auto md:h-auto md:min-tap flex items-center justify-center rounded-[9px] bg-raised text-placeholder hover:text-primary transition-colors"
+              aria-label="Notifications"
             >
               <Bell className="w-[17px] h-[17px]" />
               {unreadCount > 0 && (
@@ -144,7 +145,7 @@ export function Header() {
           </div>
 
           {/* Help icon */}
-          <button className="w-[34px] h-[34px] md:w-auto md:h-auto md:min-tap flex items-center justify-center rounded-[9px] bg-raised text-placeholder hover:text-primary transition-colors">
+          <button className="w-[34px] h-[34px] md:w-auto md:h-auto md:min-tap flex items-center justify-center rounded-[9px] bg-raised text-placeholder hover:text-primary transition-colors" aria-label="Help">
             <HelpCircle className="w-[17px] h-[17px]" />
           </button>
 
@@ -152,7 +153,7 @@ export function Header() {
           <button
             onClick={() => logout()}
             className="w-[34px] h-[34px] md:w-auto md:h-auto md:min-tap flex items-center justify-center rounded-[9px] bg-raised text-placeholder hover:text-accent-red transition-colors"
-            title="Sign out"
+            aria-label="Sign out"
           >
             <LogOut className="w-[17px] h-[17px]" />
           </button>
