@@ -12,9 +12,9 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, maxWidth = 'max-w-6xl', decoration }: AppLayoutProps) {
   return (
-    <div className="min-h-screen flex">
+    <div className="h-screen flex overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 ml-[56px] md:ml-[220px]">
+      <div className="flex flex-col flex-1 min-w-0 ml-[56px] md:ml-[220px]">
         <Header />
         <main className="flex-1 relative overflow-y-auto">
           {decoration && (

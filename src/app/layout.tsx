@@ -32,7 +32,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable} h-full bg-background text-white`}>
-      <body className="min-h-screen h-full antialiased bg-background text-white">
+      <body className="h-screen overflow-hidden antialiased bg-background text-white">
         <Providers>
           {children}
           <PwaSetup />

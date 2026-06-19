@@ -52,7 +52,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-20 bg-surface border-b border-white/10">
+    <header className="relative z-20 bg-surface border-b border-white/10 shrink-0">
       <div className="flex items-center justify-between h-14 px-4 md:px-5 lg:px-7">
         {/* Page title */}
         <h1 className="text-[16px] font-medium text-primary">{title}</h1>
