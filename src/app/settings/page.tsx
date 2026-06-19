@@ -20,116 +20,18 @@ import { cn } from '@/lib/utils';
 import { subscribeToPush, unsubscribeFromPush } from '@/lib/push';
 import { playAlarm, isAlarmEnabled, setAlarmEnabled } from '@/lib/alarm';
 import { getSettings, updateSettings, createOrUpdateUser } from '@/lib/db';
+import { useTheme } from '@/hooks/useTheme';
 
 type Section = 'profile' | 'themes' | 'notifications' | 'security';
 
 const SETTINGS_KEY = 'todo-app-settings';
 
-interface ThemeVars {
-  '--bg-base': string;
-  '--bg-surface': string;
-  '--bg-raised': string;
-  '--bg-hover': string;
-  '--text-primary': string;
-  '--text-secondary': string;
-  '--text-placeholder': string;
-  '--accent-blue': string;
-  '--accent-green': string;
-  '--accent-red': string;
-  '--accent-yellow': string;
-  '--accent-purple': string;
-}
-
-function hexToRgb(hex: string): string {
-  const v = parseInt(hex.slice(1), 16);
-  return `${(v >> 16) & 255} ${(v >> 8) & 255} ${v & 255}`;
-}
-
-const themeConfigs: Record<string, { name: string; desc: string; swatches: string[]; vars: ThemeVars }> = {
-  ocean: {
-    name: 'Ocean Midnight',
-    desc: 'Calm deep-sea focus',
-    swatches: ['#0d0f14', '#6c8fff', '#3ecf8e'],
-    vars: {
-      '--bg-base': hexToRgb('#0d0f14'),
-      '--bg-surface': hexToRgb('#13161d'),
-      '--bg-raised': hexToRgb('#1a1e28'),
-      '--bg-hover': hexToRgb('#222736'),
-      '--text-primary': hexToRgb('#f0f2f7'),
-      '--text-secondary': hexToRgb('#9aa0b4'),
-      '--text-placeholder': hexToRgb('#5c6278'),
-      '--accent-blue': hexToRgb('#6c8fff'),
-      '--accent-green': hexToRgb('#3ecf8e'),
-      '--accent-red': hexToRgb('#f87171'),
-      '--accent-yellow': hexToRgb('#fbbf24'),
-      '--accent-purple': hexToRgb('#a78bfa'),
-    },
-  },
-  solar: {
-    name: 'Solar Eclipse',
-    desc: 'Warm intense energy',
-    swatches: ['#1a0a00', '#fbbf24', '#f87171'],
-    vars: {
-      '--bg-base': hexToRgb('#1a0a00'),
-      '--bg-surface': hexToRgb('#221205'),
-      '--bg-raised': hexToRgb('#2e1a0a'),
-      '--bg-hover': hexToRgb('#3d2612'),
-      '--text-primary': hexToRgb('#fef3c7'),
-      '--text-secondary': hexToRgb('#d4a574'),
-      '--text-placeholder': hexToRgb('#8a6a3c'),
-      '--accent-blue': hexToRgb('#fbbf24'),
-      '--accent-green': hexToRgb('#f87171'),
-      '--accent-red': hexToRgb('#fb923c'),
-      '--accent-yellow': hexToRgb('#fbbf24'),
-      '--accent-purple': hexToRgb('#fbbf24'),
-    },
-  },
-  amethyst: {
-    name: 'Amethyst Obsidian',
-    desc: 'Creative deep flow',
-    swatches: ['#0a0514', '#a78bfa', '#c084fc'],
-    vars: {
-      '--bg-base': hexToRgb('#0a0514'),
-      '--bg-surface': hexToRgb('#100a1e'),
-      '--bg-raised': hexToRgb('#1a122e'),
-      '--bg-hover': hexToRgb('#261a3e'),
-      '--text-primary': hexToRgb('#f0eef7'),
-      '--text-secondary': hexToRgb('#b8a8d4'),
-      '--text-placeholder': hexToRgb('#7a6a94'),
-      '--accent-blue': hexToRgb('#a78bfa'),
-      '--accent-green': hexToRgb('#c084fc'),
-      '--accent-red': hexToRgb('#e879f9'),
-      '--accent-yellow': hexToRgb('#a78bfa'),
-      '--accent-purple': hexToRgb('#c084fc'),
-    },
-  },
-  emerald: {
-    name: 'Emerald Midnight',
-    desc: 'Balanced natural calm',
-    swatches: ['#021a0f', '#3ecf8e', '#6ee7b7'],
-    vars: {
-      '--bg-base': hexToRgb('#021a0f'),
-      '--bg-surface': hexToRgb('#052314'),
-      '--bg-raised': hexToRgb('#0a2e1b'),
-      '--bg-hover': hexToRgb('#123d26'),
-      '--text-primary': hexToRgb('#e6f7ee'),
-      '--text-secondary': hexToRgb('#8ac4a4'),
-      '--text-placeholder': hexToRgb('#4a7a5c'),
-      '--accent-blue': hexToRgb('#3ecf8e'),
-      '--accent-green': hexToRgb('#6ee7b7'),
-      '--accent-red': hexToRgb('#34d399'),
-      '--accent-yellow': hexToRgb('#3ecf8e'),
-      '--accent-purple': hexToRgb('#6ee7b7'),
-    },
-  },
-};
-
-const themes = Object.entries(themeConfigs).map(([id, t]) => ({
-  id,
-  name: t.name,
-  desc: t.desc,
-  swatches: t.swatches,
-}));
+const themes = [
+  { id: 'ocean', name: 'Ocean Midnight', desc: 'Calm deep-sea focus', swatches: ['#0d0f14', '#6c8fff', '#3ecf8e'] },
+  { id: 'solar', name: 'Solar Eclipse', desc: 'Warm intense energy', swatches: ['#1a0a00', '#fbbf24', '#f87171'] },
+  { id: 'amethyst', name: 'Amethyst Obsidian', desc: 'Creative deep flow', swatches: ['#0a0514', '#a78bfa', '#c084fc'] },
+  { id: 'emerald', name: 'Emerald Midnight', desc: 'Balanced natural calm', swatches: ['#021a0f', '#3ecf8e', '#6ee7b7'] },
+];
 
 interface SavedSettings {
   displayName: string;
@@ -162,15 +64,6 @@ function saveSettings(s: SavedSettings) {
   } catch {}
 }
 
-function applyTheme(themeId: string) {
-  const config = themeConfigs[themeId];
-  if (!config) return;
-  const root = document.documentElement;
-  for (const [key, val] of Object.entries(config.vars)) {
-    root.style.setProperty(key, val);
-  }
-}
-
 const notifSettings = [
   { id: 'push', label: 'Push alerts', desc: 'Receive real-time browser notifications for task updates' },
   { id: 'alarm', label: 'Alarm sound', desc: 'Play an audible alarm for high-priority and overdue tasks' },
@@ -190,15 +83,23 @@ export default function SettingsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { themeId, setTheme } = useTheme();
 
   const [activeSection, setActiveSection] = useState<Section>('profile');
   const [displayName, setDisplayName] = useState('');
   const [dailyGoal, setDailyGoal] = useState(5);
-  const [selectedTheme, setSelectedTheme] = useState('ocean');
+  const [selectedTheme, setSelectedTheme] = useState(themeId);
   const [notifStates, setNotifStates] = useState<Record<string, boolean>>(defaultSettings.notifStates);
   const [secStates, setSecStates] = useState<Record<string, boolean>>(defaultSettings.secStates);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  // Sync selectedTheme to ThemeProvider when it changes locally
+  useEffect(() => {
+    if (settingsLoaded && selectedTheme !== themeId) {
+      setTheme(selectedTheme);
+    }
+  }, [selectedTheme, settingsLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch settings from server on mount
   useEffect(() => {
@@ -207,18 +108,16 @@ export default function SettingsPage() {
       try {
         const s = await getSettings(user.csrfToken);
         setDailyGoal(s.daily_goal);
-        setSelectedTheme(s.selected_theme);
+        setSelectedTheme(s.selected_theme || themeId);
         setNotifStates(s.notif_states);
         setSecStates(s.sec_states);
-        applyTheme(s.selected_theme);
       } catch {
         // fallback to cached localStorage
         const cached = loadSettings();
         setDailyGoal(cached.dailyGoal);
-        setSelectedTheme(cached.selectedTheme);
+        setSelectedTheme(cached.selectedTheme || themeId);
         setNotifStates(cached.notifStates);
         setSecStates(cached.secStates);
-        applyTheme(cached.selectedTheme);
       }
       setSettingsLoaded(true);
     })();
@@ -229,11 +128,6 @@ export default function SettingsPage() {
     if (user?.displayName) setDisplayName(user.displayName);
   }, [user]);
 
-  // Re-apply theme whenever it changes
-  useEffect(() => {
-    if (settingsLoaded) applyTheme(selectedTheme);
-  }, [selectedTheme, settingsLoaded]);
-
   // Persist to localStorage as cache
   const cacheLocally = useCallback(() => {
     saveSettings({ displayName, dailyGoal, selectedTheme, notifStates, secStates });
@@ -243,10 +137,9 @@ export default function SettingsPage() {
     if (settingsLoaded) cacheLocally();
   }, [cacheLocally, settingsLoaded]);
 
-  // Sync state to server — accepts overrides so callers pass the *new* values immediately
+  // Sync non-theme state to server
   const syncToServer = useCallback(async (overrides?: {
     dailyGoal?: number;
-    selectedTheme?: string;
     notifStates?: Record<string, boolean>;
     secStates?: Record<string, boolean>;
   }) => {
@@ -254,7 +147,7 @@ export default function SettingsPage() {
     try {
       await updateSettings({
         daily_goal: overrides?.dailyGoal ?? dailyGoal,
-        selected_theme: overrides?.selectedTheme ?? selectedTheme,
+        selected_theme: selectedTheme,
         notif_states: overrides?.notifStates ?? notifStates,
         sec_states: overrides?.secStates ?? secStates,
       }, user.csrfToken);
@@ -546,7 +439,7 @@ export default function SettingsPage() {
                     return (
                       <button
                         key={theme.id}
-                        onClick={async () => { setSelectedTheme(theme.id); await syncToServer({ selectedTheme: theme.id }); }}
+                        onClick={() => setSelectedTheme(theme.id)}
                         className={cn(
                           'relative rounded-[10px] p-3.5 border-2 transition-all duration-150 text-left',
                           isSelected
