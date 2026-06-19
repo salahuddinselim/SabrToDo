@@ -7,12 +7,14 @@ import {
   Bell,
   Search,
   HelpCircle,
+  LogOut,
   Check,
   Clock,
   AlertCircle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { cn, formatRelativeTime, sanitize } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Notification {
   id: string;
@@ -34,6 +36,7 @@ export function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications] = useState<Notification[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const { logout } = useAuth();
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
   const title = pageTitles[pathname] || 'SabrFlow';
@@ -143,6 +146,15 @@ export function Header() {
           {/* Help icon */}
           <button className="w-[34px] h-[34px] md:w-auto md:h-auto md:min-tap flex items-center justify-center rounded-[9px] bg-raised text-placeholder hover:text-primary transition-colors">
             <HelpCircle className="w-[17px] h-[17px]" />
+          </button>
+
+          {/* Logout */}
+          <button
+            onClick={() => logout()}
+            className="w-[34px] h-[34px] md:w-auto md:h-auto md:min-tap flex items-center justify-center rounded-[9px] bg-raised text-placeholder hover:text-accent-red transition-colors"
+            title="Sign out"
+          >
+            <LogOut className="w-[17px] h-[17px]" />
           </button>
         </div>
       </div>

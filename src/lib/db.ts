@@ -15,6 +15,7 @@ async function request<T>(
   const { csrfToken: _csrf, ...fetchOptions } = options || {};
   const res = await fetch(url, {
     headers,
+    cache: 'no-store',
     ...fetchOptions,
   });
   if (!res.ok) {
