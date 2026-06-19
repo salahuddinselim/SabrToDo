@@ -14,6 +14,7 @@ const cspDirectives = {
   'object-src': ["'none'"],
   'base-uri': ["'self'"],
   'form-action': ["'self'"],
+  'worker-src': ["'self'", 'blob:'],
 };
 
 const cspString = Object.entries(cspDirectives)

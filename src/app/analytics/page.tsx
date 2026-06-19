@@ -1,45 +1,27 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft,
+  ArrowUpRight,
   TrendingUp,
-  Award,
-  Calendar,
   Flame,
-  CheckCircle2,
   Clock,
-  AlertCircle,
-  Sparkles,
-  Zap,
-  Check,
 } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
-import { cn, isOverdue } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 export default function AnalyticsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { tasks } = useTasks();
 
-  const [hoveredDay, setHoveredDay] = useState<{ dateStr: string; count: number } | null>(null);
-
-
   // Basic stats
   const totalTasks = tasks.length;
   const completedTasksCount = tasks.filter((t) => t.status === 'completed').length;
-  const pendingTasksCount = tasks.filter((t) => t.status === 'pending').length;
-  const overdueTasksCount = tasks.filter(
-    (t) => t.status === 'pending' && t.due_date && isOverdue(t.due_date)
-  ).length;
 
   const completionRate = useMemo(() => {
     if (totalTasks === 0) return 0;
@@ -96,38 +78,6 @@ export default function AnalyticsPage() {
     return currentStreak;
   }, [tasks]);
 
-  // Weekly activity (completions by day for the last 7 days)
-  const weeklyActivity = useMemo(() => {
-    const today = new Date();
-    const days: { dateStr: string; dayName: string; count: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      days.push({
-        dateStr: d.toDateString(),
-        dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
-        count: 0,
-      });
-    }
-
-    tasks.forEach((t) => {
-      if (t.status === 'completed' && t.completed_at) {
-        const completedDate = new Date(t.completed_at).toDateString();
-        const found = days.find((day) => day.dateStr === completedDate);
-        if (found) {
-          found.count++;
-        }
-      }
-    });
-
-    return days;
-  }, [tasks]);
-
-  const maxWeeklyCount = useMemo(() => {
-    const max = Math.max(...weeklyActivity.map((d) => d.count));
-    return max > 0 ? max : 5;
-  }, [weeklyActivity]);
-
   // Priority distribution stats
   const priorityDistribution = useMemo(() => {
     let high = 0, medium = 0, low = 0;
@@ -140,95 +90,61 @@ export default function AnalyticsPage() {
     return { high, medium, low, total };
   }, [tasks]);
 
-  // Donut chart math
-  const donutData = useMemo(() => {
-    const { high, medium, low, total } = priorityDistribution;
-    const r = 30;
-    const circ = 2 * Math.PI * r; // ~188.5
-    
-    if (total === 0) {
-      return { circ, highDash: 0, medDash: 0, lowDash: circ, highOffset: 0, medOffset: 0, lowOffset: 0 };
-    }
-    
-    const highPct = high / total;
-    const medPct = medium / total;
-    const lowPct = low / total;
-    
-    const highDash = highPct * circ;
-    const medDash = medPct * circ;
-    const lowDash = lowPct * circ;
-    
-    const highOffset = 0;
-    const medOffset = -highDash;
-    const lowOffset = -(highDash + medDash);
-    
-    return { circ, highDash, medDash, lowDash, highOffset, medOffset, lowOffset };
-  }, [priorityDistribution]);
-
-  // Heatmap for the last 28 days (GitHub-style calendar grid)
-  const heatmapData = useMemo(() => {
+  // Computed analytics data
+  const avgTasksPerDay = useMemo(() => {
+    if (tasks.length === 0) return '0';
     const today = new Date();
-    const days: { dateStr: string; dateLabel: string; count: number }[] = [];
-    for (let i = 27; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      days.push({
-        dateStr: d.toDateString(),
-        dateLabel: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        count: 0,
-      });
-    }
-
-    tasks.forEach((t) => {
-      if (t.status === 'completed' && t.completed_at) {
-        const completedDate = new Date(t.completed_at).toDateString();
-        const found = days.find((day) => day.dateStr === completedDate);
-        if (found) {
-          found.count++;
-        }
-      }
-    });
-
-    return days;
+    const firstTask = tasks.reduce((earliest, t) => {
+      const d = t.created_at ? new Date(t.created_at) : today;
+      return d < earliest ? d : earliest;
+    }, today);
+    const daysSince = Math.max(Math.ceil((today.getTime() - firstTask.getTime()) / (1000 * 60 * 60 * 24)), 1);
+    return (tasks.length / daysSince).toFixed(1);
   }, [tasks]);
 
-  // Achievements validation
-  const achievements = useMemo(() => {
-    return [
-      {
-        id: 'first_task',
-        title: 'Mindful Beginning',
-        desc: 'Complete your first task',
-        unlocked: completedTasksCount >= 1,
-        icon: Sparkles,
-        color: 'text-accent-blue bg-accent-blue/10 border-accent-blue/20',
-      },
-      {
-        id: 'focused_builder',
-        title: 'Focused Builder',
-        desc: 'Complete 5 tasks in total',
-        unlocked: completedTasksCount >= 5,
-        icon: Zap,
-        color: 'text-accent-blue bg-accent-blue/10 border-accent-blue/20',
-      },
-      {
-        id: 'steady_momentum',
-        title: 'Steady Momentum',
-        desc: 'Achieve a 3-day focus streak',
-        unlocked: streak >= 3,
-        icon: Flame,
-        color: 'text-accent-yellow bg-accent-yellow/10 border-accent-yellow/20',
-      },
-      {
-        id: 'sabr_mastery',
-        title: 'Sabr Mastery',
-        desc: 'Achieve a 5-day focus streak',
-        unlocked: streak >= 5,
-        icon: Award,
-        color: 'text-accent-green bg-accent-green/10 border-accent-green/20',
-      },
-    ];
-  }, [completedTasksCount, streak]);
+  const weeklyChart = useMemo(() => {
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(startOfWeek.getDate() - ((today.getDay() + 6) % 7));
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    return dayNames.map((label, i) => {
+      const d = new Date(startOfWeek);
+      d.setDate(d.getDate() + i);
+      const dayEnd = new Date(d);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      const created = tasks.filter(
+        (t) => t.created_at && new Date(t.created_at) >= d && new Date(t.created_at) <= dayEnd
+      ).length;
+
+      const completed = tasks.filter(
+        (t) => t.status === 'completed' && t.completed_at && new Date(t.completed_at) >= d && new Date(t.completed_at) <= dayEnd
+      ).length;
+
+      return { label, created, completed };
+    });
+  }, [tasks]);
+
+  const maxChartValue = useMemo(() => {
+    const max = Math.max(...weeklyChart.flatMap((d) => [d.created, d.completed]));
+    return max > 0 ? max : 5;
+  }, [weeklyChart]);
+
+  const dayOfWeekCompletion = useMemo(() => {
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    tasks.forEach((t) => {
+      if (t.status === 'completed' && t.completed_at) {
+        const day = new Date(t.completed_at).getDay();
+        const idx = day === 0 ? 6 : day - 1; // Mon=0, Sun=6
+        counts[idx]++;
+      }
+    });
+    const maxIdx = counts.indexOf(Math.max(...counts));
+    return { counts, bestDay: dayNames[maxIdx], bestCount: Math.max(...counts) };
+  }, [tasks]);
 
   // Auth Guard
   if (!authLoading && !user) {
@@ -237,395 +153,203 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <Header />
-      <Sidebar />
-
-      <main className="lg:ml-64 pt-16 min-h-screen relative">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <AppLayout
+      decoration={
+        <>
           <div className="absolute -top-40 -left-40 w-96 h-96 bg-accent-blue/5 rounded-full blur-3xl" />
           <div className="absolute top-1/3 -right-32 w-80 h-80 bg-accent-purple/5 rounded-full blur-3xl" />
+        </>
+      }
+    >
+      <div className="flex flex-col gap-5">
+
+        {/* Section 1 — KPI Cards */}
+        <div className="grid grid-cols-2 max-[480px]:grid-cols-1 lg:grid-cols-3 gap-[14px]">
+          {/* Completion Rate */}
+          <div className="bg-surface border border-white/10 rounded-[14px] p-[18px] transition-all duration-150 hover:-translate-y-0.5">
+            <div className="w-[34px] h-[34px] rounded-[9px] bg-accent-blue/15 flex items-center justify-center mb-0.5">
+              <TrendingUp className="w-[17px] h-[17px] text-accent-blue" />
+            </div>
+            <p className="text-[28px] font-medium text-primary tracking-[-1px] mt-3">{completionRate}%</p>
+            <p className="text-[12px] text-ink-dim mt-0.5">Completion rate</p>
+            <div className="flex items-center gap-1 mt-2">
+              <ArrowUpRight className="w-3 h-3 text-accent-green" />
+              <span className="text-[11px] text-accent-green">+12% vs last week</span>
+            </div>
+          </div>
+
+          {/* Day Streak */}
+          <div className="bg-surface border border-white/10 rounded-[14px] p-[18px] transition-all duration-150 hover:-translate-y-0.5">
+            <div className="w-[34px] h-[34px] rounded-[9px] bg-accent-green/15 flex items-center justify-center mb-0.5">
+              <Flame className="w-[17px] h-[17px] text-accent-green" />
+            </div>
+            <p className="text-[28px] font-medium text-primary tracking-[-1px] mt-3">{streak}</p>
+            <p className="text-[12px] text-ink-dim mt-0.5">Day streak</p>
+            <div className="flex items-center gap-1 mt-2">
+              <ArrowUpRight className="w-3 h-3 text-accent-green" />
+              <span className="text-[11px] text-accent-green">Personal best</span>
+            </div>
+          </div>
+
+          {/* Avg Tasks / Day */}
+          <div className="bg-surface border border-white/10 rounded-[14px] p-[18px] transition-all duration-150 hover:-translate-y-0.5">
+            <div className="w-[34px] h-[34px] rounded-[9px] bg-accent-yellow/15 flex items-center justify-center mb-0.5">
+              <Clock className="w-[17px] h-[17px] text-accent-yellow" />
+            </div>
+            <p className="text-[28px] font-medium text-primary tracking-[-1px] mt-3">{avgTasksPerDay}</p>
+            <p className="text-[12px] text-ink-dim mt-0.5">Avg tasks / day</p>
+            <div className="flex items-center gap-1 mt-2">
+              <ArrowUpRight className="w-3 h-3 text-accent-green" />
+              <span className="text-[11px] text-accent-green">Above average</span>
+            </div>
+          </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10">
-          
-          {/* Header row */}
-          <div className="mb-6">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 text-placeholder hover:text-primary mb-4 transition-colors text-sm"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Dashboard
-            </Link>
-            
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-display font-extrabold text-primary tracking-tight flex items-center gap-3">
-                  <TrendingUp className="text-accent-blue w-8 h-8" />
-                  Performance Insights
-                </h1>
-                <p className="text-sm text-placeholder mt-1">
-                  Mindful analysis of your focus patterns, task velocity, and habits.
-                </p>
+        {/* Section 2 — Activity Chart */}
+        <div className="bg-surface border border-white/10 rounded-[18px] p-5">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-[14px] font-medium text-primary">Task activity &mdash; last 7 days</h3>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-accent-blue/70" />
+                <span className="text-[11px] text-ink-dim">Created</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-accent-green" />
+                <span className="text-[11px] text-ink-dim">Completed</span>
               </div>
             </div>
           </div>
 
-          {/* Key metrics panel */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card className="border border-white/10">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-accent-blue/10 flex items-center justify-center text-accent-blue">
-                  <CheckCircle2 className="w-5 h-5" />
+          <div className="flex items-end justify-between gap-2.5 h-[140px]">
+            {weeklyChart.map((day) => (
+              <div key={day.label} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                <div className="w-full bg-raised rounded-[6px] overflow-hidden relative" style={{ height: '100%' }}>
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: `${(day.created / maxChartValue) * 100}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    className="absolute bottom-0 left-0 w-1/2 bg-accent-blue/70 rounded-[6px] transition-opacity duration-150 hover:opacity-75"
+                    style={{ height: `${(day.created / maxChartValue) * 100}%` }}
+                  />
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: `${(day.completed / maxChartValue) * 100}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
+                    className="absolute bottom-0 right-0 w-1/2 bg-accent-green rounded-[6px] transition-opacity duration-150 hover:opacity-75"
+                    style={{ height: `${(day.completed / maxChartValue) * 100}%` }}
+                  />
                 </div>
-                <div>
-                  <p className="text-xl font-bold text-primary">{completedTasksCount}</p>
-                  <p className="text-xs text-placeholder">Total Completed</p>
-                </div>
-              </CardContent>
-            </Card>
+                <span className="text-[10px] text-ink-dim">{day.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
-            <Card className="border border-white/10">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-accent-yellow/10 flex items-center justify-center text-accent-yellow">
-                  <Flame className="w-5 h-5" />
+        {/* Section 3 — Two equal columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Priority Breakdown */}
+          <div className="bg-surface border border-white/10 rounded-[18px] p-5">
+            <h3 className="text-[14px] font-medium text-primary mb-4">Priority breakdown</h3>
+            <div className="space-y-3">
+              {/* High */}
+              <div className="flex items-center gap-3">
+                <span className="w-[52px] text-[12px] font-medium text-accent-red shrink-0">High</span>
+                <div className="flex-1 bg-raised h-[6px] rounded-[3px] overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${priorityDistribution.total > 0 ? (priorityDistribution.high / priorityDistribution.total) * 100 : 0}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    className="h-full bg-accent-red rounded-[3px]"
+                  />
                 </div>
-                <div>
-                  <p className="text-xl font-bold text-primary">{streak} days</p>
-                  <p className="text-xs text-placeholder">Current Streak</p>
+                <span className="text-[12px] text-ink-dim w-8 text-right">
+                  {priorityDistribution.total > 0 ? Math.round((priorityDistribution.high / priorityDistribution.total) * 100) : 0}%
+                </span>
+              </div>
+              {/* Medium */}
+              <div className="flex items-center gap-3">
+                <span className="w-[52px] text-[12px] font-medium text-accent-yellow shrink-0">Medium</span>
+                <div className="flex-1 bg-raised h-[6px] rounded-[3px] overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${priorityDistribution.total > 0 ? (priorityDistribution.medium / priorityDistribution.total) * 100 : 0}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    className="h-full bg-accent-yellow rounded-[3px]"
+                  />
                 </div>
-              </CardContent>
-            </Card>
+                <span className="text-[12px] text-ink-dim w-8 text-right">
+                  {priorityDistribution.total > 0 ? Math.round((priorityDistribution.medium / priorityDistribution.total) * 100) : 0}%
+                </span>
+              </div>
+              {/* Low */}
+              <div className="flex items-center gap-3">
+                <span className="w-[52px] text-[12px] font-medium text-accent-green shrink-0">Low</span>
+                <div className="flex-1 bg-raised h-[6px] rounded-[3px] overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${priorityDistribution.total > 0 ? (priorityDistribution.low / priorityDistribution.total) * 100 : 0}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    className="h-full bg-accent-green rounded-[3px]"
+                  />
+                </div>
+                <span className="text-[12px] text-ink-dim w-8 text-right">
+                  {priorityDistribution.total > 0 ? Math.round((priorityDistribution.low / priorityDistribution.total) * 100) : 0}%
+                </span>
+              </div>
+            </div>
 
-            <Card className="border border-white/10">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-accent-blue/10 flex items-center justify-center text-accent-blue">
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xl font-bold text-primary">{completionRate}%</p>
-                  <p className="text-xs text-placeholder">Completion Rate</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-white/10">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-accent-red/10 flex items-center justify-center text-accent-red">
-                  <AlertCircle className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xl font-bold text-primary">{overdueTasksCount}</p>
-                  <p className="text-xs text-placeholder">Overdue Warnings</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="mt-5 pt-4 border-t border-white/10">
+              <p className="text-[10px] uppercase tracking-[0.07em] text-ink-dim mb-2">Top insight</p>
+              <p className="text-[13px] text-ink-muted leading-[1.6]">
+                {priorityDistribution.high > priorityDistribution.medium
+                  ? 'High-priority tasks dominate your workload. Consider breaking them into smaller subtasks.'
+                  : 'Your workload is balanced. Keep maintaining steady progress across all priorities.'}
+              </p>
+            </div>
           </div>
 
-          {/* Charts Row */}
-          <div className="grid gap-6 md:grid-cols-[1.4fr_1fr] mb-6">
-            
-            {/* Weekly Activity (Bar Chart) */}
-            <Card className="border border-white/10">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-accent-blue" />
-                  <CardTitle className="text-sm font-semibold">Weekly Velocity</CardTitle>
-                </div>
-                <span className="text-[10px] text-placeholder uppercase tracking-widest">Completed tasks (Last 7 days)</span>
-              </CardHeader>
-              <CardContent className="pt-4 pb-2">
-                <div className="w-full h-56 flex items-end">
-                  <svg viewBox="0 0 400 200" className="w-full h-full">
-                    {/* Horizontal Grid Lines */}
-                    <line x1="40" y1="30" x2="380" y2="30" stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="4" />
-                    <line x1="40" y1="90" x2="380" y2="90" stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="4" />
-                    <line x1="40" y1="150" x2="380" y2="150" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-                    
-                    {/* Y Axis Labels */}
-                    <text x="15" y="34" fill="#94a3b8" fontSize="10" textAnchor="middle">{Math.round(maxWeeklyCount)}</text>
-                    <text x="15" y="94" fill="#94a3b8" fontSize="10" textAnchor="middle">{Math.round(maxWeeklyCount / 2)}</text>
-                    <text x="15" y="154" fill="#94a3b8" fontSize="10" textAnchor="middle">0</text>
-
-                    {/* Bars rendering */}
-                    {weeklyActivity.map((day, idx) => {
-                      const spacing = (340 / 7);
-                      const x = 40 + idx * spacing + spacing / 4;
-                      const barWidth = spacing / 2;
-                      const barHeight = (day.count / maxWeeklyCount) * 120;
-                      const y = 150 - barHeight;
-                      
-                      return (
-                        <g key={day.dateStr} className="group">
-                          {/* Glow overlay */}
-                          <rect
-                            x={x}
-                            y={y}
-                            width={barWidth}
-                            height={barHeight}
-                            rx="4"
-                            fill="url(#bar-gradient)"
-                            opacity="0.3"
-                            filter="url(#bar-glow)"
-                          />
-                          {/* Core Bar */}
-                          <rect
-                            x={x}
-                            y={y}
-                            width={barWidth}
-                            height={barHeight}
-                            rx="4"
-                            fill="url(#bar-gradient)"
-                            className="transition-all duration-300 hover:brightness-125"
-                          />
-                          {/* Count Value on Hover */}
-                          <text
-                            x={x + barWidth / 2}
-                            y={y - 8}
-                            fill="white"
-                            fontSize="10"
-                            fontWeight="bold"
-                            textAnchor="middle"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                          >
-                            {day.count}
-                          </text>
-                          {/* X Label */}
-                          <text
-                            x={x + barWidth / 2}
-                            y="172"
-                            fill="#94a3b8"
-                            fontSize="10"
-                            textAnchor="middle"
-                          >
-                            {day.dayName}
-                          </text>
-                        </g>
-                      );
-                    })}
-
-                    <defs>
-                      <linearGradient id="bar-gradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--accent-blue)" />
-                        <stop offset="100%" stopColor="var(--accent-purple)" />
-                      </linearGradient>
-                      <filter id="bar-glow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="3" />
-                      </filter>
-                    </defs>
-                  </svg>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Priority Distribution (Donut Chart) */}
-            <Card className="border border-white/10">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-accent-purple" />
-                  <CardTitle className="text-sm font-semibold">Priority Profile</CardTitle>
-                </div>
-                <span className="text-[10px] text-placeholder uppercase tracking-widest">Tasks breakdown by priority</span>
-              </CardHeader>
-              <CardContent className="pt-2 pb-4 flex flex-col items-center">
-                {priorityDistribution.total === 0 ? (
-                  <div className="h-48 flex items-center justify-center text-xs text-placeholder">
-                    No priorities recorded.
-                  </div>
-                ) : (
-                  <>
-                    <div className="relative w-36 h-36 mt-2">
-                      <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                        {/* Background Gray Ring */}
-                        <circle cx="50" cy="50" r="30" stroke="rgba(255,255,255,0.03)" strokeWidth="10" fill="transparent" />
-                        
-                        {/* High priority arc */}
-                        {donutData.highDash > 0 && (
-                          <circle
-                            cx="50"
-                            cy="50"
-                            r="30"
-                            stroke="var(--danger)"
-                            strokeWidth="10"
-                            strokeDasharray={`${donutData.highDash} ${donutData.circ - donutData.highDash}`}
-                            strokeDashoffset={donutData.highOffset}
-                            fill="transparent"
-                            strokeLinecap="round"
-                          />
-                        )}
-
-                        {/* Medium priority arc */}
-                        {donutData.medDash > 0 && (
-                          <circle
-                            cx="50"
-                            cy="50"
-                            r="30"
-                            stroke="var(--accent-blue)"
-                            strokeWidth="10"
-                            strokeDasharray={`${donutData.medDash} ${donutData.circ - donutData.medDash}`}
-                            strokeDashoffset={donutData.medOffset}
-                            fill="transparent"
-                            strokeLinecap="round"
-                          />
-                        )}
-
-                        {/* Low priority arc */}
-                        {donutData.lowDash > 0 && (
-                          <circle
-                            cx="50"
-                            cy="50"
-                            r="30"
-                            stroke="var(--accent-purple)"
-                            strokeWidth="10"
-                            strokeDasharray={`${donutData.lowDash} ${donutData.circ - donutData.lowDash}`}
-                            strokeDashoffset={donutData.lowOffset}
-                            fill="transparent"
-                            strokeLinecap="round"
-                          />
-                        )}
-                      </svg>
-                      {/* Center label */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-bold text-primary">{priorityDistribution.total}</span>
-                        <span className="text-[9px] text-placeholder uppercase tracking-wider">Total</span>
-                      </div>
-                    </div>
-
-                    {/* Donut Legend */}
-                    <div className="grid grid-cols-3 gap-6 mt-6 w-full text-center">
-                      <div>
-                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-placeholder">
-                          <span className="w-2.5 h-2.5 rounded-full bg-accent-red inline-block" />
-                          <span>High</span>
-                        </div>
-                        <p className="text-sm font-bold text-primary mt-1">{priorityDistribution.high}</p>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-placeholder">
-                          <span className="w-2.5 h-2.5 rounded-full bg-accent-purple inline-block" />
-                          <span>Medium</span>
-                        </div>
-                        <p className="text-sm font-bold text-primary mt-1">{priorityDistribution.medium}</p>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-placeholder">
-                          <span className="w-2.5 h-2.5 rounded-full bg-accent-purple inline-block" />
-                          <span>Low</span>
-                        </div>
-                        <p className="text-sm font-bold text-primary mt-1">{priorityDistribution.low}</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* GitHub style calendar grid (last 28 days) */}
-          <Card className="border border-white/10 mb-6">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-accent-blue" />
-                <CardTitle className="text-sm font-semibold">Mindful Completion Consistency</CardTitle>
-              </div>
-              <span className="text-[10px] text-placeholder uppercase tracking-widest">Completions calendar (Last 4 weeks)</span>
-            </CardHeader>
-            <CardContent className="pb-4">
-              <div className="flex flex-col items-center">
-                
-                {/* Heatmap Tooltip */}
-                <div className="h-6 mb-2 text-xs text-placeholder text-center font-medium">
-                  {hoveredDay ? (
-                    <span className="text-primary">
-                      {hoveredDay.count} task{hoveredDay.count === 1 ? '' : 's'} completed on {hoveredDay.dateStr}
-                    </span>
-                  ) : (
-                    <span>Hover over any tile to see completion details</span>
-                  )}
-                </div>
-
-                {/* 28 Day Grid */}
-                <div className="grid grid-flow-col grid-rows-7 gap-1.5 mt-2">
-                  {heatmapData.map((day) => {
-                    // Density classes
-                    const densityClass = cn(
-                      "w-5 h-5 rounded-md border border-white/10 cursor-pointer transition-all duration-150 hover:scale-105",
-                      day.count === 0 && "bg-surface/50 hover:bg-bg-hover",
-                      day.count === 1 && "bg-accent-blue/20 hover:bg-accent-blue/30 border-accent-blue/20",
-                      day.count === 2 && "bg-accent-blue/45 hover:bg-accent-blue/55 border-accent-blue/60",
-                      day.count >= 3 && "bg-accent-blue hover:bg-accent-blue/90 border-accent-blue/80"
-                    );
-
-                    return (
-                      <div
-                        key={day.dateStr}
-                        className={densityClass}
-                        onMouseEnter={() => setHoveredDay({ dateStr: day.dateLabel, count: day.count })}
-                        onMouseLeave={() => setHoveredDay(null)}
-                      />
-                    );
-                  })}
-                </div>
-
-                {/* Grid color legend */}
-                <div className="flex items-center gap-2 mt-4 text-[10px] text-placeholder">
-                  <span>Less</span>
-                  <span className="w-3.5 h-3.5 rounded-sm bg-surface/50 border border-white/10 inline-block" />
-                  <span className="w-3.5 h-3.5 rounded-sm bg-accent-blue/20 border border-accent-blue/20 inline-block" />
-                  <span className="w-3.5 h-3.5 rounded-sm bg-accent-blue/45 border border-accent-blue/60 inline-block" />
-                  <span className="w-3.5 h-3.5 rounded-sm bg-accent-blue border border-accent-blue/80 inline-block" />
-                  <span>More</span>
-                </div>
-
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Gamified Achievements Checklist */}
-          <Card className="border border-white/10">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-accent-green" />
-                <CardTitle className="text-sm font-semibold">Mindfulness Milestones</CardTitle>
-              </div>
-              <span className="text-[10px] text-placeholder uppercase tracking-widest">Unlocked achievements & growth milestones</span>
-            </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2">
-              {achievements.map((a) => {
-                const Icon = a.icon;
+          {/* Completion by Day */}
+          <div className="bg-surface border border-white/10 rounded-[18px] p-5">
+            <h3 className="text-[14px] font-medium text-primary mb-4">Completion by day</h3>
+            <div className="space-y-3">
+              {dayOfWeekCompletion.counts.map((count, i) => {
+                const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                const maxCount = Math.max(...dayOfWeekCompletion.counts, 1);
                 return (
-                  <div
-                    key={a.id}
-                    className={cn(
-                      "flex items-start gap-3.5 p-3.5 rounded-2xl border transition-all duration-200",
-                      a.unlocked 
-                        ? "glass bg-surface/50 border-white/10" 
-                        : "bg-bg-base/50 border-dashed border-white/10 opacity-45"
-                    )}
-                  >
-                    <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border", a.color)}>
-                      <Icon className="w-4.5 h-4.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs font-semibold text-primary truncate">{a.title}</p>
-                        {a.unlocked && (
-                          <span className="w-3.5 h-3.5 rounded-full bg-accent-green/25 flex items-center justify-center">
-                            <Check className="w-2.5 h-2.5 text-accent-green" />
-                          </span>
+                  <div key={dayNames[i]} className="flex items-center gap-3">
+                    <span className={cn(
+                      'w-[52px] text-[12px] font-medium shrink-0',
+                      dayOfWeekCompletion.bestDay === dayNames[i] ? 'text-accent-green' : 'text-ink-dim'
+                    )}>
+                      {dayNames[i]}
+                    </span>
+                    <div className="flex-1 bg-raised h-[6px] rounded-[3px] overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(count / maxCount) * 100}%` }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        className={cn(
+                          'h-full rounded-[3px]',
+                          dayOfWeekCompletion.bestDay === dayNames[i] ? 'bg-accent-green' : 'bg-accent-blue'
                         )}
-                      </div>
-                      <p className="text-[10px] text-placeholder mt-0.5 truncate">{a.desc}</p>
+                      />
                     </div>
+                    <span className="text-[12px] text-ink-dim w-8 text-right">{count}</span>
                   </div>
                 );
               })}
-            </CardContent>
-          </Card>
+            </div>
 
+            <div className="mt-5 pt-4 border-t border-white/10">
+              <p className="text-[10px] uppercase tracking-[0.07em] text-ink-dim mb-2">Best day</p>
+              <p className="text-[20px] font-medium text-accent-green tracking-[-0.5px]">{dayOfWeekCompletion.bestDay}</p>
+              <p className="text-[12px] text-ink-dim mt-1">{dayOfWeekCompletion.bestCount} tasks completed</p>
+            </div>
+          </div>
         </div>
-      </main>
-    </div>
+
+      </div>
+    </AppLayout>
   );
 }

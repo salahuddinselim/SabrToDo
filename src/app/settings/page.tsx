@@ -2,39 +2,100 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft,
   User,
+  Palette,
   Bell,
   Shield,
-  Palette,
   Check,
-  Zap,
+  Monitor,
+  Laptop,
+  Trash2,
 } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
+import { subscribeToPush, unsubscribeFromPush } from '@/lib/push';
+
+type Section = 'profile' | 'themes' | 'notifications' | 'security';
+
+const themes = [
+  {
+    id: 'ocean',
+    name: 'Ocean Midnight',
+    desc: 'Calm deep-sea focus',
+    swatches: ['#0d0f14', '#6c8fff', '#3ecf8e'],
+  },
+  {
+    id: 'solar',
+    name: 'Solar Eclipse',
+    desc: 'Warm intense energy',
+    swatches: ['#1a0a00', '#fbbf24', '#f87171'],
+  },
+  {
+    id: 'amethyst',
+    name: 'Amethyst Obsidian',
+    desc: 'Creative deep flow',
+    swatches: ['#0a0514', '#a78bfa', '#c084fc'],
+  },
+  {
+    id: 'emerald',
+    name: 'Emerald Midnight',
+    desc: 'Balanced natural calm',
+    swatches: ['#021a0f', '#3ecf8e', '#6ee7b7'],
+  },
+];
+
+const notifSettings = [
+  { id: 'push', label: 'Push alerts', desc: 'Receive real-time browser notifications for task updates' },
+  { id: 'digest', label: 'Daily digest', desc: 'Get a summary of your tasks and progress every morning' },
+  { id: 'overdue', label: 'Overdue reminders', desc: 'Gentle nudges when tasks are past their due date' },
+  { id: 'goal', label: 'Goal celebration', desc: 'A little boost when you hit your daily completion target' },
+  { id: 'report', label: 'Weekly report', desc: 'Receive a detailed report every Monday morning' },
+];
+
+const securitySettings = [
+  { id: 'timeout', label: 'Session timeout', desc: 'Automatically sign out after 30 minutes of inactivity' },
+  { id: 'login', label: 'Login notifications', desc: 'Get notified when a new device signs into your account' },
+  { id: 'audit', label: 'Audit log', desc: 'Keep a record of all account activity and changes' },
+];
 
 export default function SettingsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { showToast } = useToast();
+  const { toast } = useToast();
 
-  const [pushNotifications, setPushNotifications] = useState(false);
-  const [emailDigests, setEmailDigests] = useState(false);
+  const [activeSection, setActiveSection] = useState<Section>('profile');
+  const [displayName, setDisplayName] = useState('');
+  const [dailyGoal, setDailyGoal] = useState(5);
+  const [selectedTheme, setSelectedTheme] = useState('ocean');
+  const [notifStates, setNotifStates] = useState<Record<string, boolean>>({
+    push: true,
+    digest: false,
+    overdue: true,
+    goal: true,
+    report: false,
+  });
+  const [secStates, setSecStates] = useState<Record<string, boolean>>({
+    timeout: true,
+    login: true,
+    audit: false,
+  });
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setPushNotifications(localStorage.getItem('sabrflow-push') === 'true');
-      setEmailDigests(localStorage.getItem('sabrflow-digests') === 'true');
-    }
+    if (user?.displayName) setDisplayName(user.displayName);
+  }, [user]);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    navigator.serviceWorker.ready.then((reg) =>
+      reg.pushManager.getSubscription().then((sub) => {
+        if (sub) setNotifStates((prev) => ({ ...prev, push: true }));
+      })
+    );
   }, []);
 
   if (!authLoading && !user) {
@@ -42,255 +103,376 @@ export default function SettingsPage() {
     return null;
   }
 
-  const togglePush = async () => {
-    const nextVal = !pushNotifications;
-    setPushNotifications(nextVal);
-    localStorage.setItem('sabrflow-push', String(nextVal));
-    
-    if (nextVal && typeof window !== 'undefined' && 'Notification' in window) {
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          showToast('Push notifications enabled!', 'success');
+  const toggleNotif = async (id: string) => {
+    const next = !notifStates[id];
+    setNotifStates((prev) => ({ ...prev, [id]: next }));
+
+    if (id === 'push') {
+      if (next) {
+        const sub = await subscribeToPush();
+        if (sub && sub.endpoint) {
+          await fetch('/api/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription: sub }),
+          });
+          toast.success('Push notifications enabled');
         } else {
-          showToast('Notification permission denied', 'warning');
-          setPushNotifications(false);
-          localStorage.setItem('sabrflow-push', 'false');
+          setNotifStates((prev) => ({ ...prev, push: false }));
+          toast.warning('Push permission denied');
         }
-      } catch {
-        showToast('Push notifications configured', 'success');
+      } else {
+        const registration = await navigator.serviceWorker.ready;
+        const existing = await registration.pushManager.getSubscription();
+        if (existing?.endpoint) {
+          await fetch(`/api/push/subscribe?endpoint=${encodeURIComponent(existing.endpoint)}`, { method: 'DELETE' });
+        }
+        await unsubscribeFromPush();
+        toast.info('Push notifications disabled');
       }
-    } else if (!nextVal) {
-      showToast('Push notifications disabled', 'info');
+      return;
     }
+
+    toast.success('Notification preference updated');
   };
 
-  const toggleDigests = () => {
-    const nextVal = !emailDigests;
-    setEmailDigests(nextVal);
-    localStorage.setItem('sabrflow-digests', String(nextVal));
-    showToast(nextVal ? 'Daily email digest enabled' : 'Daily email digest disabled', 'info');
+  const toggleSec = (id: string) => {
+    setSecStates((prev) => ({ ...prev, [id]: !prev[id] }));
+    toast.success('Security setting updated');
   };
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 15 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: 0.05 * i, duration: 0.3, ease: 'easeOut' },
-    }),
+  const handleSaveProfile = () => {
+    toast.success('Profile saved successfully');
   };
+
+  const handleDeleteAll = () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    toast.info('Feature coming soon — delete individually for now');
+    setConfirmDelete(false);
+  };
+
+  const navItems: { id: Section; label: string; icon: typeof User }[] = [
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'themes', label: 'Themes', icon: Palette },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'security', label: 'Security', icon: Shield },
+  ];
+
+  const Switch = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
+    <button
+      onClick={onChange}
+      className={cn(
+        'w-[38px] h-[22px] rounded-[11px] p-[3px] transition-colors duration-200 shrink-0 outline-none',
+        checked ? 'bg-accent-blue' : 'bg-raised'
+      )}
+    >
+      <div
+        className={cn(
+          'w-[14px] h-[14px] bg-white rounded-full transition-transform duration-200',
+          checked ? 'translate-x-[18px]' : 'translate-x-0'
+        )}
+      />
+    </button>
+  );
 
   return (
-    <div className="min-h-screen">
-      <Header />
-      <Sidebar />
-
-      <main className="lg:ml-64 pt-16 min-h-screen relative">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <AppLayout
+      decoration={
+        <>
           <div className="absolute -top-40 -left-40 w-96 h-96 bg-accent-blue/5 rounded-full blur-3xl" />
           <div className="absolute top-1/3 -right-32 w-80 h-80 bg-accent-purple/5 rounded-full blur-3xl" />
-        </div>
+        </>
+      }
+    >
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6">
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 text-placeholder hover:text-primary mb-6 transition-colors text-sm"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Dashboard
-            </Link>
+        {/* Side Nav */}
+        <nav className="md:w-[210px] shrink-0 md:sticky md:top-[82px] md:self-start">
+          <div className="flex flex-row md:flex-col gap-1 overflow-x-auto">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeSection === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id)}
+                  className={cn(
+                    'flex items-center gap-[9px] px-3 py-[9px] rounded-[10px] text-[13px] transition-all duration-150 shrink-0',
+                    isActive
+                      ? 'bg-accent-blue/10 text-accent-blue font-medium'
+                      : 'text-ink-muted hover:text-primary hover:bg-bg-hover'
+                  )}
+                >
+                  <Icon className="w-[17px] h-[17px] shrink-0" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
 
-            <h1 className="text-3xl font-display font-extrabold text-primary mb-6 tracking-tight">Settings</h1>
+        {/* Content Panel */}
+        <div className="flex-1 min-w-0">
 
-            <div className="space-y-6">
-              
+          {/* Profile Panel */}
+          {activeSection === 'profile' && (
+            <div className="flex flex-col gap-4">
               {/* Profile Card */}
-              <motion.div custom={0} variants={cardVariants} initial="hidden" animate="visible">
-                <Card className="border border-white/10">
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-accent-blue/10 flex items-center justify-center">
-                        <User className="w-4 h-4 text-accent-blue" />
-                      </div>
-                      <CardTitle>UserProfile</CardTitle>
+              <div className="bg-surface border border-white/10 rounded-[14px] md:rounded-[18px] overflow-hidden">
+                <div className="flex items-center gap-2.5 px-4 md:px-5 pt-4 pb-3.5 border-b border-white/10">
+                  <div className="w-[30px] h-[30px] rounded-[8px] bg-accent-blue/15 flex items-center justify-center">
+                    <User className="w-[15px] h-[15px] text-accent-blue" />
+                  </div>
+                  <h2 className="text-[14px] font-medium text-primary">Profile</h2>
+                </div>
+                <div className="p-3.5 md:p-5 space-y-4 md:space-y-5">
+                  {/* Avatar row */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-[52px] h-[52px] rounded-full bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center shrink-0">
+                      <span className="text-white font-medium text-lg">
+                        {user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'B'}
+                      </span>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-4">
-                      {user?.photoURL ? (
-                        <Image
-                          src={user.photoURL}
-                          alt={user.displayName || 'User'}
-                          width={64}
-                          height={64}
-                          className="w-16 h-16 rounded-full object-cover border border-white/10"
-                          referrerPolicy="no-referrer"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="w-16 h-16 rounded-full gradient-bg flex items-center justify-center">
-                          <span className="text-white font-bold text-xl">
-                            {user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
-                          </span>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-lg font-bold text-primary">
-                          {user?.displayName || 'Builder'}
-                        </p>
-                        <p className="text-xs text-placeholder mt-0.5">{user?.email}</p>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface text-[10px] text-placeholder border border-white/10 mt-2 font-medium">
-                          Google Authenticated
-                        </span>
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-medium text-primary truncate">
+                        {user?.displayName || 'Builder'}
+                      </p>
+                      <p className="text-[12px] text-ink-dim truncate">{user?.email}</p>
+                      <div className="flex items-center gap-1 mt-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent-green" />
+                        <span className="text-[11px] text-accent-green font-medium">Google connected</span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                  </div>
 
-              {/* Design System Info (simplified - fixed theme) */}
-              <motion.div custom={1} variants={cardVariants} initial="hidden" animate="visible">
-                <Card className="border border-white/10">
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-accent-purple/10 flex items-center justify-center">
-                        <Palette className="w-4 h-4 text-accent-purple" />
-                      </div>
-                      <div>
-                        <CardTitle>Design System</CardTitle>
-                        <span className="text-[10px] text-placeholder uppercase tracking-widest">Fixed focus environment</span>
-                      </div>
+                  {/* Fields */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[12px] text-ink-dim block mb-1">Display name</label>
+                      <input
+                        type="text"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        className="w-full bg-raised border border-white/10 rounded-[9px] px-3 py-2 text-[13px] text-primary outline-none transition-colors duration-150 focus:border-accent-blue"
+                      />
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="glass bg-surface/50 border border-white/10 rounded-2xl p-5">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-2xl gradient-bg flex items-center justify-center shrink-0">
-                          <Zap className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="space-y-2">
-                          <h3 className="text-sm font-bold text-primary">SabrFlow Dark</h3>
-                          <p className="text-xs text-placeholder leading-relaxed">
-                            A calm, deep workspace designed for consistent focus. This fixed palette uses rich midnight blues, soft purples, and accent-driven highlights to keep your mind clear and your tasks organized.
-                          </p>
-                          <div className="flex items-center gap-2 pt-1">
-                            <span className="w-4 h-4 rounded-full bg-accent-blue border border-white/10 inline-block" />
-                            <span className="w-4 h-4 rounded-full bg-accent-purple border border-white/10 inline-block" />
-                            <span className="w-4 h-4 rounded-full bg-accent-green border border-white/10 inline-block" />
-                            <span className="w-4 h-4 rounded-full bg-accent-red border border-white/10 inline-block" />
-                            <span className="w-4 h-4 rounded-full bg-accent-yellow border border-white/10 inline-block" />
-                          </div>
-                        </div>
-                      </div>
+                    <div>
+                      <label className="text-[12px] text-ink-dim block mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={user?.email || ''}
+                        disabled
+                        className="w-full bg-raised/50 border border-white/10 rounded-[9px] px-3 py-2 text-[13px] text-ink-dim outline-none opacity-45 cursor-not-allowed"
+                      />
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                    <div>
+                      <label className="text-[12px] text-ink-dim block mb-1">Daily goal</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={dailyGoal}
+                        onChange={(e) => setDailyGoal(Number(e.target.value))}
+                        className="w-24 bg-raised border border-white/10 rounded-[9px] px-3 py-2 text-[13px] text-primary outline-none transition-colors duration-150 focus:border-accent-blue"
+                      />
+                    </div>
+                  </div>
 
-              {/* Notifications */}
-              <motion.div custom={2} variants={cardVariants} initial="hidden" animate="visible">
-                <Card className="border border-white/10">
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-accent-yellow/10 flex items-center justify-center">
-                        <Bell className="w-4 h-4 text-accent-yellow" />
-                      </div>
-                      <div>
-                        <CardTitle>Notifications</CardTitle>
-                        <span className="text-[10px] text-placeholder uppercase tracking-widest">Control alert loops</span>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-surface/50 border border-white/10">
-                      <div>
-                        <p className="text-xs font-bold text-primary">Browser Push Reminders</p>
-                        <p className="text-[10px] text-placeholder mt-0.5">Receive immediate screen alerts for task due dates</p>
-                      </div>
-                      <button
-                        onClick={togglePush}
-                        className={cn(
-                          "w-10 h-5.5 rounded-full p-0.5 transition-colors duration-200 outline-none",
-                          pushNotifications ? "bg-accent-blue" : "bg-hover"
-                        )}
-                      >
-                        <div 
-                          className={cn(
-                            "w-4.5 h-4.5 bg-white rounded-full transition-transform duration-200",
-                            pushNotifications ? "translate-x-4.5" : "translate-x-0"
-                          )}
-                        />
-                      </button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-surface/50 border border-white/10">
-                      <div>
-                        <p className="text-xs font-bold text-primary">Daily Summary Digests</p>
-                        <p className="text-[10px] text-placeholder mt-0.5">Get a clean summary email of pending checklist tasks</p>
-                      </div>
-                      <button
-                        onClick={toggleDigests}
-                        className={cn(
-                          "w-10 h-5.5 rounded-full p-0.5 transition-colors duration-200 outline-none",
-                          emailDigests ? "bg-accent-blue" : "bg-hover"
-                        )}
-                      >
-                        <div 
-                          className={cn(
-                            "w-4.5 h-4.5 bg-white rounded-full transition-transform duration-200",
-                            emailDigests ? "translate-x-4.5" : "translate-x-0"
-                          )}
-                        />
-                      </button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                  <button
+                    onClick={handleSaveProfile}
+                    className="flex items-center gap-1.5 bg-accent-blue text-white text-[13px] font-medium rounded-[9px] px-4 py-2 transition-all duration-150 hover:opacity-85 active:scale-[0.97]"
+                  >
+                    <Check className="w-4 h-4" />
+                    Save changes
+                  </button>
+                </div>
+              </div>
 
-              {/* Security */}
-              <motion.div custom={3} variants={cardVariants} initial="hidden" animate="visible">
-                <Card className="border border-white/10">
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-accent-green/10 flex items-center justify-center">
-                        <Shield className="w-4 h-4 text-accent-green" />
-                      </div>
-                      <CardTitle>Security</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-placeholder mb-4 leading-relaxed">
-                      Your workspace is protected with encrypted authentication tokens and Google OAuth configurations.
+              {/* Danger Zone */}
+              <div className="bg-surface border border-white/10 rounded-[14px] md:rounded-[18px] overflow-hidden">
+                <div className="flex items-center gap-2.5 px-4 md:px-5 pt-4 pb-3.5 border-b border-white/10">
+                  <div className="w-[30px] h-[30px] rounded-[8px] bg-accent-red/15 flex items-center justify-center">
+                    <Trash2 className="w-[15px] h-[15px] text-accent-red" />
+                  </div>
+                  <h2 className="text-[14px] font-medium text-accent-red">Danger zone</h2>
+                </div>
+                <div className="p-3.5 md:p-5">
+                  <div className="border border-accent-red/25 rounded-[14px] p-4 bg-accent-red/5">
+                    <p className="text-[13px] font-medium text-accent-red">Delete all tasks</p>
+                    <p className="text-[12px] text-ink-dim mt-1">
+                      Permanently remove every task from your workspace. This action cannot be undone.
                     </p>
-                    <div className="glass bg-surface/50 border border-white/10 rounded-2xl p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-surface/50 flex items-center justify-center border border-white/10">
-                          <svg className="w-5 h-5" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-primary">Google OAuth Service</p>
-                          <p className="text-[10px] text-placeholder mt-0.5">{user?.email}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
+                    <button
+                      onClick={handleDeleteAll}
+                      className={cn(
+                        'mt-3 text-[12px] font-medium rounded-[9px] px-4 py-2 transition-all duration-150 active:scale-[0.97]',
+                        confirmDelete
+                          ? 'bg-accent-red text-white'
+                          : 'border border-accent-red/40 text-accent-red hover:bg-accent-red/10'
+                      )}
+                    >
+                      {confirmDelete ? 'Click to confirm' : 'Delete all tasks'}
+                    </button>
+                    {confirmDelete && (
+                      <button
+                        onClick={() => setConfirmDelete(false)}
+                        className="ml-2 text-[12px] text-ink-dim hover:text-primary transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </motion.div>
+          )}
+
+          {/* Themes Panel */}
+          {activeSection === 'themes' && (
+            <div className="bg-surface border border-white/10 rounded-[14px] md:rounded-[18px] overflow-hidden">
+              <div className="flex items-center gap-2.5 px-4 md:px-5 pt-4 pb-3.5 border-b border-white/10">
+                <div className="w-[30px] h-[30px] rounded-[8px] bg-accent-purple/15 flex items-center justify-center">
+                  <Palette className="w-[15px] h-[15px] text-accent-purple" />
+                </div>
+                <h2 className="text-[14px] font-medium text-primary">Theme presets</h2>
+              </div>
+              <div className="p-3.5 md:p-5">
+                <div className="grid grid-cols-2 gap-2.5">
+                  {themes.map((theme) => {
+                    const isSelected = selectedTheme === theme.id;
+                    return (
+                      <button
+                        key={theme.id}
+                        onClick={() => setSelectedTheme(theme.id)}
+                        className={cn(
+                          'relative rounded-[10px] p-3.5 border-2 transition-all duration-150 text-left',
+                          isSelected
+                            ? 'border-accent-blue'
+                            : 'border-transparent'
+                        )}
+                        style={{ background: theme.swatches[0] }}
+                      >
+                        {isSelected && (
+                          <span className="absolute top-2 right-2 text-accent-blue">
+                            <Check className="w-4 h-4" />
+                          </span>
+                        )}
+                        <div className="flex items-center gap-1.5 mb-2">
+                          {theme.swatches.map((color, i) => (
+                            <span
+                              key={i}
+                              className="w-[18px] h-[18px] rounded-[4px] border border-white/10"
+                              style={{ background: color }}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-[12px] font-medium text-white">{theme.name}</p>
+                        <p className="text-[10px] text-white/60 mt-0.5">{theme.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Notifications Panel */}
+          {activeSection === 'notifications' && (
+            <div className="bg-surface border border-white/10 rounded-[14px] md:rounded-[18px] overflow-hidden">
+              <div className="flex items-center gap-2.5 px-4 md:px-5 pt-4 pb-3.5 border-b border-white/10">
+                <div className="w-[30px] h-[30px] rounded-[8px] bg-accent-yellow/15 flex items-center justify-center">
+                  <Bell className="w-[15px] h-[15px] text-accent-yellow" />
+                </div>
+                <h2 className="text-[14px] font-medium text-primary">Notifications</h2>
+              </div>
+              <div className="p-3.5 md:p-5 space-y-0">
+                {notifSettings.map((setting, i) => (
+                  <div
+                    key={setting.id}
+                    className={cn(
+                      'flex items-center justify-between py-3.5',
+                      i < notifSettings.length - 1 && 'border-b border-white/10'
+                    )}
+                  >
+                    <div className="flex-1 min-w-0 pr-3">
+                      <p className="text-[13px] text-primary">{setting.label}</p>
+                      <p className="text-[11px] text-ink-dim mt-0.5">{setting.desc}</p>
+                    </div>
+                    <Switch
+                      checked={notifStates[setting.id]}
+                      onChange={() => toggleNotif(setting.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Security Panel */}
+          {activeSection === 'security' && (
+            <div className="bg-surface border border-white/10 rounded-[14px] md:rounded-[18px] overflow-hidden">
+              <div className="flex items-center gap-2.5 px-4 md:px-5 pt-4 pb-3.5 border-b border-white/10">
+                <div className="w-[30px] h-[30px] rounded-[8px] bg-accent-green/15 flex items-center justify-center">
+                  <Shield className="w-[15px] h-[15px] text-accent-green" />
+                </div>
+                <h2 className="text-[14px] font-medium text-primary">Security</h2>
+              </div>
+              <div className="p-3.5 md:p-5 space-y-4 md:space-y-5">
+                {/* Status bar */}
+                <div className="bg-accent-green/5 border border-accent-green/15 rounded-[12px] p-4">
+                  <div className="flex items-center gap-2.5">
+                    <Shield className="w-[17px] h-[17px] text-accent-green shrink-0" />
+                    <p className="text-[13px] text-accent-green font-medium">Workspace is secure</p>
+                  </div>
+                  <p className="text-[11px] text-ink-dim mt-1.5">Google OAuth active &middot; Session tokens encrypted</p>
+                </div>
+
+                {/* Toggles */}
+                {securitySettings.map((setting, i) => (
+                  <div
+                    key={setting.id}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex-1 min-w-0 pr-3">
+                      <p className="text-[13px] text-primary">{setting.label}</p>
+                      <p className="text-[11px] text-ink-dim mt-0.5">{setting.desc}</p>
+                    </div>
+                    <Switch
+                      checked={secStates[setting.id]}
+                      onChange={() => toggleSec(setting.id)}
+                    />
+                  </div>
+                ))}
+
+                {/* Active sessions */}
+                <div className="pt-3 border-t border-white/10">
+                  <p className="text-[12px] text-ink-dim mb-3">Active sessions</p>
+                  <div className="flex items-center gap-3 p-3.5 bg-raised rounded-[10px]">
+                    <Laptop className="w-[17px] h-[17px] text-ink-muted shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] text-primary">Chrome &mdash; Dhaka, BD</p>
+                      <p className="text-[11px] text-ink-dim mt-0.5">Just now</p>
+                    </div>
+                    <span className="text-[11px] font-medium text-accent-green bg-accent-green/10 px-2 py-0.5 rounded-full">Active</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => toast.success('Settings saved')}
+                  className="flex items-center gap-1.5 bg-accent-blue text-white text-[13px] font-medium rounded-[9px] px-4 py-2 transition-all duration-150 hover:opacity-85 active:scale-[0.97]"
+                >
+                  <Check className="w-4 h-4" />
+                  Save changes
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

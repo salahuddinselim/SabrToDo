@@ -25,7 +25,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
-  const { showToast } = useToast();
+  const { toast } = useToast();
 
   const fetchTasks = useCallback(async () => {
     if (!user?.uid) return;
@@ -66,11 +66,11 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         completed_at: undefined,
       }, user.csrfToken);
       setTasks((prev) => [newTask, ...prev]);
-      showToast('Task created successfully!', 'success');
+      toast.success('Task created successfully!');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create task';
       setError(errorMessage);
-      showToast(errorMessage, 'error');
+      toast.error(errorMessage);
       throw err;
     }
   };
@@ -79,11 +79,11 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     try {
       const updatedTask = await updateTask(id, data, user?.csrfToken);
       setTasks((prev) => prev.map((task) => (task.id === id ? updatedTask : task)));
-      showToast('Task updated!', 'success');
+      toast.success('Task updated!');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update task';
       setError(errorMessage);
-      showToast(errorMessage, 'error');
+      toast.error(errorMessage);
       throw err;
     }
   };
@@ -92,11 +92,11 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     try {
       await deleteTask(id, user?.csrfToken);
       setTasks((prev) => prev.filter((task) => task.id !== id));
-      showToast('Task deleted', 'info');
+      toast.info('Task deleted');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete task';
       setError(errorMessage);
-      showToast(errorMessage, 'error');
+      toast.error(errorMessage);
       throw err;
     }
   };
@@ -116,12 +116,12 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       setTasks((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
 
       if (newStatus === 'completed') {
-        showToast('Task completed! Great work!', 'success');
+        toast.success('Task completed! Great work!');
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update task';
       setError(errorMessage);
-      showToast(errorMessage, 'error');
+      toast.error(errorMessage);
       throw err;
     }
   };
@@ -137,7 +137,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       await reorderTasks(user!.uid, taskIds, user?.csrfToken);
     } catch {
       setTasks(previousTasks);
-      showToast('Failed to reorder tasks', 'error');
+      toast.error('Failed to reorder tasks');
     }
   };
 

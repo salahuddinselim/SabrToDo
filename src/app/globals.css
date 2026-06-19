@@ -88,11 +88,21 @@
     color: #ffffff;
   }
 
-  input:focus,
-  textarea:focus,
-  button:focus-visible {
-    outline: 2px solid rgba(108, 143, 255, 0.5);
+  *:focus-visible {
+    outline: 2px solid var(--accent-blue);
     outline-offset: 2px;
+  }
+
+  button:active {
+    transform: scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -154,6 +164,15 @@
 }
 
 @layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .min-tap {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
