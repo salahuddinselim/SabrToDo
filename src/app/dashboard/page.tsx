@@ -249,7 +249,7 @@ export default function DashboardPage() {
     <AppLayout decoration={decorations}>
           
           {/* Greeting Row */}
-          <div className="flex items-start justify-between mb-4 md:mb-5">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 md:mb-5 gap-3">
             <div>
               <h1 className="text-[20px] md:text-[24px] font-medium text-primary tracking-[-0.5px]">
                 {greeting}, {user?.displayName || 'Builder'}
@@ -260,7 +260,7 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 self-start">
               {/* Refresh button */}
               <button
                 onClick={refreshTasks}
@@ -330,7 +330,7 @@ export default function DashboardPage() {
 
           {/* Stats Grid */}
           {!loading && (
-          <div className="grid grid-cols-2 max-[480px]:grid-cols-1 xl:grid-cols-4 gap-[14px] mb-4 md:mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-[14px] mb-4 md:mb-5">
             {/* Total Tasks */}
             <div className="group bg-surface border border-white/10 rounded-[14px] p-[14px] transition-all duration-150 hover:-translate-y-0.5">
               <div className="flex items-center gap-3 mb-0.5">

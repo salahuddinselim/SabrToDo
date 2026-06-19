@@ -245,7 +245,78 @@ export default function AnalyticsPage() {
           </motion.div>
         </motion.div>
 
-        {/* Section 2 — Activity Chart */}
+        {/* Section 2.5 — 28-Day Completion Heatmap */}
+        <motion.div
+          variants={sectionVariants}
+          initial="hidden"
+          animate="show"
+          className="bg-surface border border-white/10 rounded-[18px] p-5"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[14px] font-medium text-primary">Completion heatmap &mdash; last 28 days</h3>
+          </div>
+          {noData ? (
+            <div className="flex flex-col items-center justify-center h-[80px] text-center">
+              <p className="text-[13px] text-ink-muted">No completions yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-7 gap-[3px]">
+              {(() => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const days: { date: Date; count: number; label?: string }[] = [];
+                const completedDates = tasks
+                  .filter((t) => t.status === 'completed' && t.completed_at)
+                  .reduce((acc: Record<string, number>, t) => {
+                    const key = new Date(t.completed_at!).toDateString();
+                    acc[key] = (acc[key] || 0) + 1;
+                    return acc;
+                  }, {});
+                for (let i = 27; i >= 0; i--) {
+                  const d = new Date(today);
+                  d.setDate(d.getDate() - i);
+                  const key = d.toDateString();
+                  days.push({
+                    date: d,
+                    count: completedDates[key] || 0,
+                    label: i % 7 === 0 ? `${d.getMonth() + 1}/${d.getDate()}` : undefined,
+                  });
+                }
+                const maxCount = Math.max(...days.map((d) => d.count), 1);
+                return days.map((day, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2, delay: 0.3 + idx * 0.015 }}
+                    className="group relative"
+                  >
+                    <div
+                      className={cn(
+                        'w-full aspect-square rounded-[3px] transition-all duration-100',
+                        day.count === 0
+                          ? 'bg-raised'
+                          : day.count / maxCount > 0.66
+                            ? 'bg-accent-green'
+                            : day.count / maxCount > 0.33
+                              ? 'bg-accent-green/70'
+                              : 'bg-accent-green/40'
+                      )}
+                    />
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                      <div className="bg-primary text-white text-[10px] px-2 py-1 rounded-[4px] whitespace-nowrap">
+                        {day.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} &mdash; {day.count} completed
+                      </div>
+                    </div>
+                    {day.label && (
+                      <span className="absolute -top-[18px] left-0 text-[8px] text-ink-dim">{day.label}</span>
+                    )}
+                  </motion.div>
+                ));
+              })()}
+            </div>
+          )}
+        </motion.div>
         <motion.div
           variants={sectionVariants}
           initial="hidden"

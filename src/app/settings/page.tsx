@@ -284,7 +284,7 @@ export default function SettingsPage() {
 
         {/* Side Nav */}
         <nav className="md:w-[210px] shrink-0 md:sticky md:top-[82px] md:self-start">
-          <div className="flex flex-row md:flex-col gap-1 overflow-x-auto">
+          <div className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible bg-surface md:bg-transparent md:rounded-none rounded-[12px] p-1 border border-white/5 md:border-0">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;

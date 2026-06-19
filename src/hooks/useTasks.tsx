@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
 import { Task, TaskFormData } from '@/types';
 import { getTasks, createTask, updateTask, deleteTask, reorderTasks } from '@/lib/db';
 import { useAuth } from './useAuth';
@@ -26,11 +26,12 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const pollingRef = useRef<ReturnType<typeof setInterval>>();
+  const visibilityRef = useRef(true);
 
   const fetchTasks = useCallback(async () => {
     if (!user?.uid) return;
 
-    setLoading(true);
     setError(null);
     try {
       const fetchedTasks = await getTasks(user.uid);
@@ -43,6 +44,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.uid]);
 
+  // Initial fetch + auth change
   useEffect(() => {
     if (user?.uid) {
       fetchTasks();
@@ -51,24 +53,60 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.uid, fetchTasks]);
 
-  // Re-fetch when the tab gains focus (covers mobile browser tab switching)
+  // 30s polling — pauses when tab is hidden
   useEffect(() => {
     if (!user?.uid) return;
-    const onFocus = () => fetchTasks();
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [user?.uid, fetchTasks]);
 
-  // Re-fetch when the network reconnects
-  useEffect(() => {
-    if (!user?.uid) return;
-    const onOnline = () => fetchTasks();
-    window.addEventListener('online', onOnline);
-    return () => window.removeEventListener('online', onOnline);
+    const startPolling = () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      pollingRef.current = setInterval(() => {
+        if (visibilityRef.current) fetchTasks();
+      }, 30000);
+    };
+
+    const onVisibility = () => {
+      visibilityRef.current = !document.hidden;
+      if (document.hidden) {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+      } else {
+        fetchTasks();
+        startPolling();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', fetchTasks);
+    window.addEventListener('online', fetchTasks);
+    startPolling();
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', fetchTasks);
+      window.removeEventListener('online', fetchTasks);
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
   }, [user?.uid, fetchTasks]);
 
   const addTask = async (data: TaskFormData) => {
     if (!user?.uid) return;
+
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const now = new Date().toISOString();
+    const optimistic: Task = {
+      id: tempId,
+      user_id: user.uid,
+      title: data.title,
+      description: data.description || '',
+      due_date: data.due_date || '',
+      priority: data.priority,
+      status: 'pending',
+      notify_before: data.notify_before,
+      created_at: now,
+      completed_at: '',
+      order_index: 0,
+    };
+
+    setTasks((prev) => [optimistic, ...prev]);
 
     try {
       const newTask = await createTask({
@@ -81,9 +119,11 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         notify_before: data.notify_before,
         completed_at: undefined,
       }, user.csrfToken);
-      setTasks((prev) => [newTask, ...prev]);
+      setTasks((prev) => prev.map((t) => (t.id === tempId ? newTask : t)));
       toast.success('Task created successfully!');
+      fetchTasks();
     } catch (err: unknown) {
+      setTasks((prev) => prev.filter((t) => t.id !== tempId));
       const errorMessage = err instanceof Error ? err.message : 'Failed to create task';
       setError(errorMessage);
       toast.error(errorMessage);
@@ -92,11 +132,16 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   };
 
   const editTask = async (id: string, data: Partial<Task>) => {
+    const prev = tasks;
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...data } : t)));
+
     try {
       const updatedTask = await updateTask(id, data, user?.csrfToken);
-      setTasks((prev) => prev.map((task) => (task.id === id ? updatedTask : task)));
+      setTasks((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
       toast.success('Task updated!');
+      fetchTasks();
     } catch (err: unknown) {
+      setTasks(prev);
       const errorMessage = err instanceof Error ? err.message : 'Failed to update task';
       setError(errorMessage);
       toast.error(errorMessage);
@@ -105,11 +150,15 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   };
 
   const removeTask = async (id: string) => {
+    const prev = tasks;
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+
     try {
       await deleteTask(id, user?.csrfToken);
-      setTasks((prev) => prev.filter((task) => task.id !== id));
       toast.info('Task deleted');
+      fetchTasks();
     } catch (err: unknown) {
+      setTasks(prev);
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete task';
       setError(errorMessage);
       toast.error(errorMessage);
@@ -122,7 +171,14 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     if (!task) return;
 
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-    const completedAt = newStatus === 'completed' ? new Date().toISOString() : null;
+    const completedAt = newStatus === 'completed' ? new Date().toISOString() : '';
+
+    const prev = tasks;
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, status: newStatus, completed_at: completedAt } : t
+      )
+    );
 
     try {
       const updatedTask = await updateTask(id, {
@@ -134,7 +190,9 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       if (newStatus === 'completed') {
         toast.success('Task completed! Great work!');
       }
+      fetchTasks();
     } catch (err: unknown) {
+      setTasks(prev);
       const errorMessage = err instanceof Error ? err.message : 'Failed to update task';
       setError(errorMessage);
       toast.error(errorMessage);
