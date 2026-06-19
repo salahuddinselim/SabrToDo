@@ -1,0 +1,79 @@
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3456
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1716ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 4.4s (1407 modules)
+ ✓ Compiled in 286ms (702 modules)
+ GET /dashboard 200 in 31ms
+ ○ Compiling /analytics ...
+ ✓ Compiled /analytics in 5.2s (1992 modules)
+ ✓ Compiled in 344ms (695 modules)
+ GET /dashboard 200 in 6670ms
+ GET /analytics 200 in 6683ms
+ GET / 200 in 6688ms
+ ✓ Compiled /settings in 414ms (2732 modules)
+ GET /settings 200 in 594ms
+ GET /api/auth/session 200 in 7682ms
+ ○ Compiling /auth/login ...
+ ✓ Compiled /auth/login in 519ms (2744 modules)
+ GET /api/auth/session 200 in 1065ms
+ GET /api/auth/session 200 in 28ms
+ GET /api/auth/session 200 in 13ms
+ ✓ Compiled in 858ms (1418 modules)
+ ✓ Compiled in 210ms (1418 modules)
+ ✓ Compiled in 207ms (1418 modules)
+ ✓ Compiled in 326ms (1418 modules)
+ ✓ Compiled in 519ms (1418 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1570ms (1628 modules)
+ GET /auth/login 200 in 96ms
+ ✓ Compiled /_not-found in 449ms (1631 modules)
+ GET /_next/static/css/app/layout.css?v=1781851756810 404 in 542ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 530ms
+ GET /_next/static/chunks/main-app.js?v=1781851756810 404 in 531ms
+ GET /_next/static/chunks/app/auth/login/page.js 404 in 530ms
+ GET /_next/static/chunks/app/template.js 404 in 530ms
+ ✓ Compiled in 392ms (905 modules)
+ ✓ Compiled in 154ms (905 modules)
+ ✓ Compiled in 725ms (1611 modules)
+ ✓ Compiled in 288ms (1611 modules)
+ ✓ Compiled in 212ms (1611 modules)
+ ✓ Compiled in 307ms (891 modules)
+ ✓ Compiled in 148ms (891 modules)
+ ✓ Compiled in 151ms (891 modules)
+ ✓ Compiled in 667ms (1611 modules)
+ ✓ Compiled in 293ms (1611 modules)
+ ✓ Compiled in 132ms (891 modules)
+ ✓ Compiled in 155ms (891 modules)
+ ✓ Compiled in 145ms (891 modules)
+ ✓ Compiled in 156ms (892 modules)
+ ✓ Compiled in 387ms (1612 modules)
+ ✓ Compiled in 232ms (1613 modules)
+ ✓ Compiled in 232ms (892 modules)
+ ✓ Compiled in 125ms (892 modules)
+ ✓ Compiled in 460ms (1599 modules)
+ ✓ Compiled in 469ms (1599 modules)
+ ✓ Compiled in 168ms (1599 modules)
+ ✓ Compiled in 227ms (892 modules)
+ ✓ Compiled in 153ms (892 modules)
+ ✓ Compiled in 155ms (892 modules)
+ ✓ Compiled in 130ms (892 modules)
+ ✓ Compiled in 141ms (892 modules)
+ ✓ Compiled in 147ms (892 modules)
+ ✓ Compiled in 151ms (892 modules)
+ ✓ Compiled in 157ms (892 modules)
+ ✓ Compiled in 214ms (892 modules)
+ ✓ Compiled in 130ms (892 modules)
+ ✓ Compiled in 136ms (892 modules)
+ ✓ Compiled in 423ms (892 modules)
+ ✓ Compiled in 417ms (1613 modules)
+ ✓ Compiled in 296ms (1613 modules)
+ ✓ Compiled in 327ms (1613 modules)
+ ✓ Compiled in 282ms (1613 modules)
+ ✓ Compiled in 264ms (1613 modules)
+ ✓ Compiled in 333ms (1613 modules)
+ ✓ Compiled in 372ms (892 modules)
+ ✓ Compiled in 137ms (892 modules)

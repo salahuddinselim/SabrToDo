@@ -5,20 +5,20 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
 :root {
-  --bg-base: #0d0f14;
-  --bg-surface: #13161d;
-  --bg-raised: #1a1e28;
-  --bg-hover: #222736;
+  --bg-base: 13 15 20;
+  --bg-surface: 19 22 29;
+  --bg-raised: 26 30 40;
+  --bg-hover: 34 39 54;
   --border-default: rgba(255, 255, 255, 0.06);
   --border-hover: rgba(255, 255, 255, 0.16);
-  --text-primary: #f0f2f7;
-  --text-secondary: #9aa0b4;
-  --text-placeholder: #5c6278;
-  --accent-blue: #6c8fff;
-  --accent-green: #3ecf8e;
-  --accent-red: #f87171;
-  --accent-yellow: #fbbf24;
-  --accent-purple: #a78bfa;
+  --text-primary: 240 242 247;
+  --text-secondary: 154 160 180;
+  --text-placeholder: 92 98 120;
+  --accent-blue: 108 143 255;
+  --accent-green: 62 207 142;
+  --accent-red: 248 113 113;
+  --accent-yellow: 251 191 36;
+  --accent-purple: 167 139 250;
 
   --font-sans: 'DM Sans', 'Segoe UI', sans-serif;
 
@@ -42,8 +42,8 @@
     scroll-behavior: smooth;
     text-rendering: optimizeLegibility;
     font-family: var(--font-sans);
-    color: var(--text-primary);
-    background: var(--bg-base);
+    color: rgb(var(--text-primary));
+    background: rgb(var(--bg-base));
     color-scheme: dark;
   }
 
@@ -55,9 +55,9 @@
     font-size: 13.5px;
     font-weight: 400;
     background:
-      radial-gradient(ellipse at 15% 12%, rgba(108, 143, 255, 0.06) 0%, transparent 48%),
-      radial-gradient(ellipse at 85% 82%, rgba(167, 139, 250, 0.04) 0%, transparent 52%),
-      var(--bg-base);
+      radial-gradient(ellipse at 15% 12%, rgb(var(--accent-blue) / 0.06) 0%, transparent 48%),
+      radial-gradient(ellipse at 85% 82%, rgb(var(--accent-purple) / 0.04) 0%, transparent 52%),
+      rgb(var(--bg-base));
   }
 
   body, input, textarea, button, select {
@@ -88,7 +88,7 @@
   }
 
   *:focus-visible {
-    outline: 2px solid var(--accent-blue);
+    outline: 2px solid rgb(var(--accent-blue));
     outline-offset: 2px;
   }
 
@@ -131,14 +131,14 @@
   }
 
   .gradient-text {
-    background: linear-gradient(120deg, var(--accent-blue), var(--accent-purple));
+    background: linear-gradient(120deg, rgb(var(--accent-blue)), rgb(var(--accent-purple)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .gradient-bg {
-    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    background: linear-gradient(135deg, rgb(var(--accent-blue)), rgb(var(--accent-purple)));
   }
 
   .accent-bar-top {
@@ -155,11 +155,11 @@
     border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   }
 
-  .accent-bar-blue::before { background: var(--accent-blue); }
-  .accent-bar-green::before { background: var(--accent-green); }
-  .accent-bar-red::before { background: var(--accent-red); }
-  .accent-bar-yellow::before { background: var(--accent-yellow); }
-  .accent-bar-purple::before { background: var(--accent-purple); }
+  .accent-bar-blue::before { background: rgb(var(--accent-blue)); }
+  .accent-bar-green::before { background: rgb(var(--accent-green)); }
+  .accent-bar-red::before { background: rgb(var(--accent-red)); }
+  .accent-bar-yellow::before { background: rgb(var(--accent-yellow)); }
+  .accent-bar-purple::before { background: rgb(var(--accent-purple)); }
 }
 
 @layer utilities {

@@ -30,11 +30,19 @@ interface ThemeVars {
   '--bg-surface': string;
   '--bg-raised': string;
   '--bg-hover': string;
+  '--text-primary': string;
+  '--text-secondary': string;
+  '--text-placeholder': string;
   '--accent-blue': string;
   '--accent-green': string;
   '--accent-red': string;
   '--accent-yellow': string;
   '--accent-purple': string;
+}
+
+function hexToRgb(hex: string): string {
+  const v = parseInt(hex.slice(1), 16);
+  return `${(v >> 16) & 255} ${(v >> 8) & 255} ${v & 255}`;
 }
 
 const themeConfigs: Record<string, { name: string; desc: string; swatches: string[]; vars: ThemeVars }> = {
@@ -43,15 +51,18 @@ const themeConfigs: Record<string, { name: string; desc: string; swatches: strin
     desc: 'Calm deep-sea focus',
     swatches: ['#0d0f14', '#6c8fff', '#3ecf8e'],
     vars: {
-      '--bg-base': '#0d0f14',
-      '--bg-surface': '#13161d',
-      '--bg-raised': '#1a1e28',
-      '--bg-hover': '#222736',
-      '--accent-blue': '#6c8fff',
-      '--accent-green': '#3ecf8e',
-      '--accent-red': '#f87171',
-      '--accent-yellow': '#fbbf24',
-      '--accent-purple': '#a78bfa',
+      '--bg-base': hexToRgb('#0d0f14'),
+      '--bg-surface': hexToRgb('#13161d'),
+      '--bg-raised': hexToRgb('#1a1e28'),
+      '--bg-hover': hexToRgb('#222736'),
+      '--text-primary': hexToRgb('#f0f2f7'),
+      '--text-secondary': hexToRgb('#9aa0b4'),
+      '--text-placeholder': hexToRgb('#5c6278'),
+      '--accent-blue': hexToRgb('#6c8fff'),
+      '--accent-green': hexToRgb('#3ecf8e'),
+      '--accent-red': hexToRgb('#f87171'),
+      '--accent-yellow': hexToRgb('#fbbf24'),
+      '--accent-purple': hexToRgb('#a78bfa'),
     },
   },
   solar: {
@@ -59,15 +70,18 @@ const themeConfigs: Record<string, { name: string; desc: string; swatches: strin
     desc: 'Warm intense energy',
     swatches: ['#1a0a00', '#fbbf24', '#f87171'],
     vars: {
-      '--bg-base': '#1a0a00',
-      '--bg-surface': '#221205',
-      '--bg-raised': '#2e1a0a',
-      '--bg-hover': '#3d2612',
-      '--accent-blue': '#fbbf24',
-      '--accent-green': '#f87171',
-      '--accent-red': '#fb923c',
-      '--accent-yellow': '#fbbf24',
-      '--accent-purple': '#fbbf24',
+      '--bg-base': hexToRgb('#1a0a00'),
+      '--bg-surface': hexToRgb('#221205'),
+      '--bg-raised': hexToRgb('#2e1a0a'),
+      '--bg-hover': hexToRgb('#3d2612'),
+      '--text-primary': hexToRgb('#fef3c7'),
+      '--text-secondary': hexToRgb('#d4a574'),
+      '--text-placeholder': hexToRgb('#8a6a3c'),
+      '--accent-blue': hexToRgb('#fbbf24'),
+      '--accent-green': hexToRgb('#f87171'),
+      '--accent-red': hexToRgb('#fb923c'),
+      '--accent-yellow': hexToRgb('#fbbf24'),
+      '--accent-purple': hexToRgb('#fbbf24'),
     },
   },
   amethyst: {
@@ -75,15 +89,18 @@ const themeConfigs: Record<string, { name: string; desc: string; swatches: strin
     desc: 'Creative deep flow',
     swatches: ['#0a0514', '#a78bfa', '#c084fc'],
     vars: {
-      '--bg-base': '#0a0514',
-      '--bg-surface': '#100a1e',
-      '--bg-raised': '#1a122e',
-      '--bg-hover': '#261a3e',
-      '--accent-blue': '#a78bfa',
-      '--accent-green': '#c084fc',
-      '--accent-red': '#e879f9',
-      '--accent-yellow': '#a78bfa',
-      '--accent-purple': '#c084fc',
+      '--bg-base': hexToRgb('#0a0514'),
+      '--bg-surface': hexToRgb('#100a1e'),
+      '--bg-raised': hexToRgb('#1a122e'),
+      '--bg-hover': hexToRgb('#261a3e'),
+      '--text-primary': hexToRgb('#f0eef7'),
+      '--text-secondary': hexToRgb('#b8a8d4'),
+      '--text-placeholder': hexToRgb('#7a6a94'),
+      '--accent-blue': hexToRgb('#a78bfa'),
+      '--accent-green': hexToRgb('#c084fc'),
+      '--accent-red': hexToRgb('#e879f9'),
+      '--accent-yellow': hexToRgb('#a78bfa'),
+      '--accent-purple': hexToRgb('#c084fc'),
     },
   },
   emerald: {
@@ -91,15 +108,18 @@ const themeConfigs: Record<string, { name: string; desc: string; swatches: strin
     desc: 'Balanced natural calm',
     swatches: ['#021a0f', '#3ecf8e', '#6ee7b7'],
     vars: {
-      '--bg-base': '#021a0f',
-      '--bg-surface': '#052314',
-      '--bg-raised': '#0a2e1b',
-      '--bg-hover': '#123d26',
-      '--accent-blue': '#3ecf8e',
-      '--accent-green': '#6ee7b7',
-      '--accent-red': '#34d399',
-      '--accent-yellow': '#3ecf8e',
-      '--accent-purple': '#6ee7b7',
+      '--bg-base': hexToRgb('#021a0f'),
+      '--bg-surface': hexToRgb('#052314'),
+      '--bg-raised': hexToRgb('#0a2e1b'),
+      '--bg-hover': hexToRgb('#123d26'),
+      '--text-primary': hexToRgb('#e6f7ee'),
+      '--text-secondary': hexToRgb('#8ac4a4'),
+      '--text-placeholder': hexToRgb('#4a7a5c'),
+      '--accent-blue': hexToRgb('#3ecf8e'),
+      '--accent-green': hexToRgb('#6ee7b7'),
+      '--accent-red': hexToRgb('#34d399'),
+      '--accent-yellow': hexToRgb('#3ecf8e'),
+      '--accent-purple': hexToRgb('#6ee7b7'),
     },
   },
 };
