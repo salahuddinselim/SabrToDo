@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllRows, appendRow } from '@/lib/sheets';
+import { getAllRows, appendRow, backfillUserEmail, emailMatches } from '@/lib/sheets';
 import { requireAuthForRequest, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
 import { taskSchema } from '@/lib/validation';
 
@@ -35,10 +35,11 @@ function toTaskResponse(row: Record<string, string>): TaskResponse {
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuthForRequest(request);
+    await backfillUserEmail(user.id, user.email);
 
     const tasks = await getAllRows('tasks');
     const userTasks = tasks
-      .filter((t) => t.user_id === user.id)
+      .filter((t) => emailMatches(t.user_email, user.email) || t.user_id === user.id)
       .sort(
         (a, b) =>
           Number(a.order_index) - Number(b.order_index) ||
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuthForRequest(request);
+    await backfillUserEmail(user.id, user.email);
     const body = await request.json();
 
     const parsed = taskSchema.safeParse(body);
@@ -70,13 +72,14 @@ export async function POST(request: NextRequest) {
 
     const tasks = await getAllRows('tasks');
     const maxOrder = tasks
-      .filter((t) => t.user_id === user.id)
+      .filter((t) => emailMatches(t.user_email, user.email) || t.user_id === user.id)
       .reduce((max, t) => Math.max(max, Number(t.order_index || 0)), 0);
 
     const now = new Date().toISOString();
     const newTask = {
       id: randomUUID(),
       user_id: user.id,
+      user_email: user.email || '',
       title,
       description: description || '',
       due_date: due_date || '',

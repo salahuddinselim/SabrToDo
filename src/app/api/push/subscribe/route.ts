@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
       await appendRow('push_subscriptions', {
         id: crypto.randomUUID(),
         user_id: user.id,
+        user_email: user.email || '',
         endpoint: body.subscription.endpoint,
         subscription: subscriptionJson,
         created_at: new Date().toISOString(),

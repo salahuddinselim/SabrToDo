@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllRows, updateRowByColumn, deleteRowByColumn } from '@/lib/sheets';
-import { requireAuthForRequest, requireOwnership, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
+import { getAllRows, updateRowByColumn, deleteRowByColumn, backfillUserEmail, emailMatches } from '@/lib/sheets';
+import { requireAuthForRequest, requireOwnership, addRateLimitHeaders, handleApiError, ApiError } from '@/lib/api-auth';
 import { taskUpdateSchema } from '@/lib/validation';
 
 interface TaskResponse {
@@ -37,6 +37,7 @@ export async function PATCH(
 ) {
   try {
     const user = await requireAuthForRequest(request);
+    await backfillUserEmail(user.id, user.email);
     const body = await request.json();
 
     const parsed = taskUpdateSchema.safeParse(body);
@@ -54,13 +55,17 @@ export async function PATCH(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    requireOwnership(user.id, task.user_id);
+    if (task.user_email && !emailMatches(task.user_email, user.email) && task.user_id !== user.id) {
+      throw new ApiError(403, 'You do not have permission to modify this task');
+    } else if (!task.user_email && task.user_id !== user.id) {
+      requireOwnership(user.id, task.user_id);
+    }
 
     const updateData: Record<string, string> = {};
     for (const [key, value] of Object.entries(parsed.data)) {
       updateData[key] = String(value);
     }
-    const updated = { ...task, ...updateData, user_id: task.user_id };
+    const updated = { ...task, ...updateData, user_id: task.user_id, user_email: task.user_email || user.email || '' };
     await updateRowByColumn('tasks', 'id', params.id, updated);
 
     const updatedTasks = await getAllRows('tasks');
@@ -78,6 +83,7 @@ export async function DELETE(
 ) {
   try {
     const user = await requireAuthForRequest(request);
+    await backfillUserEmail(user.id, user.email);
 
     const tasks = await getAllRows('tasks');
     const task = tasks.find((t) => t.id === params.id);
@@ -86,7 +92,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    requireOwnership(user.id, task.user_id);
+    if (task.user_email && !emailMatches(task.user_email, user.email) && task.user_id !== user.id) {
+      throw new ApiError(403, 'You do not have permission to delete this task');
+    } else if (!task.user_email && task.user_id !== user.id) {
+      requireOwnership(user.id, task.user_id);
+    }
 
     await deleteRowByColumn('tasks', 'id', params.id);
     const response = NextResponse.json({ success: true });

@@ -1,7 +1,6 @@
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
-import { randomUUID } from 'crypto';
-import { getAllRows, appendRow, updateRowByColumn } from '@/lib/sheets';
+import { syncUserByEmail, normalizeEmail } from '@/lib/sheets';
 import { createCSRFToken } from '@/lib/csrf';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -48,25 +47,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user }) {
       try {
         if (user.id && user.email) {
-          const users = await getAllRows('users');
-          const existing = users.find((u) => u.firebase_uid === user.id);
-          if (existing) {
-            await updateRowByColumn('users', 'firebase_uid', user.id, {
-              ...existing,
-              email: user.email,
-              display_name: user.name || existing.display_name || '',
-              updated_at: new Date().toISOString(),
-            });
-          } else {
-            await appendRow('users', {
-              id: randomUUID(),
-              firebase_uid: user.id,
-              email: user.email,
-              display_name: user.name || '',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-          }
+          await syncUserByEmail(user.id, normalizeEmail(user.email));
         }
       } catch (err) {
         console.error('Error syncing user to database:', err);

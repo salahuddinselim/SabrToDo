@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { appendRow, getAllRows, updateRowByColumn } from '@/lib/sheets';
+import { getAllRows, syncUserByEmail, updateRowByColumn, normalizeEmail, appendRow } from '@/lib/sheets';
 import { requireAuthForRequest, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
 import { userSchema } from '@/lib/validation';
 
@@ -33,34 +33,34 @@ export async function POST(request: NextRequest) {
 
     const { email, displayName } = parsed.data;
 
-    const users = await getAllRows('users');
-    const existing = users.find((u) => u.firebase_uid === user.id);
+    const normalizedEmail = normalizeEmail(email);
+    await syncUserByEmail(user.id, normalizedEmail);
 
-    if (existing) {
-      await updateRowByColumn('users', 'firebase_uid', user.id, {
-        ...existing,
-        email,
-        display_name: displayName || existing.display_name || '',
-        updated_at: new Date().toISOString(),
-      });
-      const updated = await getAllRows('users');
-      const result = updated.find((u) => u.firebase_uid === user.id);
-      const response = NextResponse.json(result ? toUserResponse(result) : null);
+    const users = await getAllRows('users');
+    const result = users.find((u) => u.firebase_uid === user.id || normalizeEmail(u.email) === normalizedEmail);
+    if (!result) {
+      const now = new Date().toISOString();
+      const newUser = {
+        id: randomUUID(),
+        firebase_uid: user.id,
+        email: normalizedEmail,
+        display_name: displayName || '',
+        created_at: now,
+        updated_at: now,
+      };
+      await appendRow('users', newUser);
+      const response = NextResponse.json(toUserResponse(newUser), { status: 201 });
       return addRateLimitHeaders(response, user.id);
     }
 
-    const now = new Date().toISOString();
-    const newUser = {
-      id: randomUUID(),
-      firebase_uid: user.id,
-      email,
-      display_name: displayName || '',
-      created_at: now,
-      updated_at: now,
+    const updated = {
+      ...result,
+      email: normalizedEmail,
+      display_name: displayName || result.display_name || '',
+      updated_at: new Date().toISOString(),
     };
-
-    await appendRow('users', newUser);
-    const response = NextResponse.json(toUserResponse(newUser), { status: 201 });
+    await updateRowByColumn('users', 'id', result.id, updated);
+    const response = NextResponse.json(toUserResponse(updated));
     return addRateLimitHeaders(response, user.id);
   } catch (error) {
     return handleApiError(error);

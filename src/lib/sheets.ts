@@ -1,4 +1,5 @@
 import { google, sheets_v4 } from 'googleapis';
+import { randomUUID } from 'crypto';
 
 const SHEET_NAMES = {
   users: 'users',
@@ -36,19 +37,106 @@ const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 const HEADERS: Record<SheetName, string[]> = {
   users: ['id', 'firebase_uid', 'email', 'display_name', 'created_at', 'updated_at'],
   tasks: [
-    'id', 'user_id', 'title', 'description', 'due_date',
+    'id', 'user_id', 'user_email', 'title', 'description', 'due_date',
     'priority', 'status', 'notify_before', 'created_at', 'completed_at', 'order_index',
   ],
   notifications: [
-    'id', 'user_id', 'type', 'title', 'message', 'task_id', 'is_read', 'created_at',
+    'id', 'user_id', 'user_email', 'type', 'title', 'message', 'task_id', 'is_read', 'created_at',
   ],
   push_subscriptions: [
-    'id', 'user_id', 'endpoint', 'subscription', 'created_at',
+    'id', 'user_id', 'user_email', 'endpoint', 'subscription', 'created_at',
   ],
   settings: [
-    'id', 'user_id', 'daily_goal', 'selected_theme', 'notif_states', 'sec_states', 'updated_at',
+    'id', 'user_id', 'user_email', 'daily_goal', 'selected_theme', 'notif_states', 'sec_states', 'updated_at',
   ],
 };
+
+export function normalizeEmail(email?: string | null): string {
+  return (email ?? '').trim().toLowerCase();
+}
+
+export function emailMatches(rowEmail: string, userEmail?: string | null): boolean {
+  return normalizeEmail(rowEmail) === normalizeEmail(userEmail);
+}
+
+async function migrateUserIdAcrossSheets(oldUid: string, newUid: string, normalizedEmail: string) {
+  const sheetsToMigrate: SheetName[] = ['tasks', 'notifications', 'settings', 'push_subscriptions'];
+  for (const sheetName of sheetsToMigrate) {
+    const rows = await getAllRows(sheetName);
+    const updates = rows
+      .filter((row) => row.user_id === oldUid)
+      .map((row) => ({
+        matchValue: row.id,
+        data: {
+          ...row,
+          user_id: newUid,
+          user_email: normalizedEmail,
+        },
+      }));
+    if (updates.length > 0) {
+      await updateMultipleRows(sheetName, 'id', updates);
+    }
+  }
+}
+
+export async function syncUserByEmail(userId: string, userEmail?: string | null) {
+  const normalizedEmail = normalizeEmail(userEmail);
+  if (!normalizedEmail) return;
+
+  const users = await getAllRows('users');
+  const existingByUid = users.find((row) => row.firebase_uid === userId);
+  const existingByEmail = users.find((row) => normalizeEmail(row.email) === normalizedEmail);
+  const now = new Date().toISOString();
+
+  if (existingByUid && existingByEmail && existingByUid.id !== existingByEmail.id) {
+    const merged: Record<string, string> = {
+      ...existingByUid,
+      email: normalizedEmail,
+      display_name: existingByUid.display_name || existingByEmail.display_name || '',
+      updated_at: now,
+    };
+    await updateRowByColumn('users', 'id', existingByUid.id, merged);
+    await deleteRowByColumn('users', 'id', existingByEmail.id);
+    if (existingByEmail.firebase_uid && existingByEmail.firebase_uid !== userId) {
+      await migrateUserIdAcrossSheets(existingByEmail.firebase_uid, userId, normalizedEmail);
+    }
+    return;
+  }
+
+  if (existingByUid) {
+    const updated: Record<string, string> = {
+      ...existingByUid,
+      email: normalizedEmail,
+      updated_at: now,
+    };
+    await updateRowByColumn('users', 'id', existingByUid.id, updated);
+    return;
+  }
+
+  if (existingByEmail) {
+    const oldUid = existingByEmail.firebase_uid;
+    const updated: Record<string, string> = {
+      ...existingByEmail,
+      firebase_uid: userId,
+      email: normalizedEmail,
+      updated_at: now,
+    };
+    await updateRowByColumn('users', 'id', existingByEmail.id, updated);
+    if (oldUid && oldUid !== userId) {
+      await migrateUserIdAcrossSheets(oldUid, userId, normalizedEmail);
+    }
+    return;
+  }
+
+  await appendRow('users', {
+    id: randomUUID(),
+    firebase_uid: userId,
+    email: normalizedEmail,
+    display_name: '',
+    created_at: now,
+    updated_at: now,
+  });
+}
 
 async function ensureSheetExists(sheetName: SheetName) {
   try {
@@ -100,12 +188,14 @@ export async function initSheet() {
         spreadsheetId: SPREADSHEET_ID,
         range: `${name}!A1:Z1`,
       });
-      if (!result.data.values || result.data.values[0]?.length === 0) {
+      const currentHeaders = result.data.values?.[0] || [];
+      const expectedHeaders = HEADERS[name as SheetName];
+      if (currentHeaders.join(',') !== expectedHeaders.join(',')) {
         await getClient().values.update({
           spreadsheetId: SPREADSHEET_ID,
           range: `${name}!A1`,
           valueInputOption: 'RAW',
-          requestBody: { values: [HEADERS[name]] },
+          requestBody: { values: [expectedHeaders] },
         });
       }
     }
@@ -274,5 +364,22 @@ export async function updateMultipleRows(
       valueInputOption: 'RAW',
       requestBody: { values: [newValues] },
     });
+  }
+}
+
+export async function backfillUserEmail(userId: string, userEmail: string | null | undefined) {
+  const normalizedEmail = normalizeEmail(userEmail);
+  if (!normalizedEmail) return;
+
+  const sheets = ['tasks', 'notifications', 'settings', 'push_subscriptions'] as SheetName[];
+  for (const name of sheets) {
+    const rows = await getAllRows(name);
+    const toUpdate = rows.filter(
+      (r) => r.user_id === userId && normalizeEmail(r.user_email) !== normalizedEmail
+    );
+    if (toUpdate.length === 0) continue;
+    for (const row of toUpdate) {
+      await updateRowByColumn(name, 'id', row.id, { ...row, user_email: normalizedEmail, user_id: userId });
+    }
   }
 }
