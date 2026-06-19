@@ -51,6 +51,22 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.uid, fetchTasks]);
 
+  // Re-fetch when the tab gains focus (covers mobile browser tab switching)
+  useEffect(() => {
+    if (!user?.uid) return;
+    const onFocus = () => fetchTasks();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [user?.uid, fetchTasks]);
+
+  // Re-fetch when the network reconnects
+  useEffect(() => {
+    if (!user?.uid) return;
+    const onOnline = () => fetchTasks();
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [user?.uid, fetchTasks]);
+
   const addTask = async (data: TaskFormData) => {
     if (!user?.uid) return;
 

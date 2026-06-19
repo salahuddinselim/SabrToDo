@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   BarChart3,
   Settings,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,7 +26,7 @@ const sectionLabels: Record<string, string> = {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [avatarError, setAvatarError] = useState(false);
 
   const isActive = (href: string) => pathname === href;
@@ -86,7 +87,7 @@ export function Sidebar() {
       </nav>
 
       {/* User footer */}
-      <div className="flex items-center justify-center md:justify-start px-0 md:px-3 py-3 border-t border-white/10">
+      <div className="flex flex-col items-center md:items-stretch px-0 md:px-3 py-3 border-t border-white/10">
         <Link
           href="/settings"
           className="flex items-center justify-center md:justify-start md:gap-3 px-0 md:px-[9px] py-[10px] rounded-[10px] hover:bg-bg-hover transition-colors min-tap"
@@ -113,6 +114,14 @@ export function Sidebar() {
             <p className="text-[10px] text-placeholder truncate">Member</p>
           </div>
         </Link>
+        <button
+          onClick={() => logout()}
+          className="flex items-center justify-center md:justify-start md:gap-3 px-0 md:px-[9px] py-[10px] rounded-[10px] text-placeholder hover:text-accent-red hover:bg-bg-hover transition-colors min-tap mt-1"
+          title="Sign out"
+        >
+          <LogOut className="w-[17px] h-[17px] shrink-0" />
+          <span className="hidden md:block text-[13px]">Sign out</span>
+        </button>
       </div>
     </aside>
   );
