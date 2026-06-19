@@ -243,11 +243,21 @@ export default function SettingsPage() {
     if (settingsLoaded) cacheLocally();
   }, [cacheLocally, settingsLoaded]);
 
-  // Sync state to server
-  const syncToServer = useCallback(async () => {
+  // Sync state to server — accepts overrides so callers pass the *new* values immediately
+  const syncToServer = useCallback(async (overrides?: {
+    dailyGoal?: number;
+    selectedTheme?: string;
+    notifStates?: Record<string, boolean>;
+    secStates?: Record<string, boolean>;
+  }) => {
     if (!user) return;
     try {
-      await updateSettings({ daily_goal: dailyGoal, selected_theme: selectedTheme, notif_states: notifStates, sec_states: secStates }, user.csrfToken);
+      await updateSettings({
+        daily_goal: overrides?.dailyGoal ?? dailyGoal,
+        selected_theme: overrides?.selectedTheme ?? selectedTheme,
+        notif_states: overrides?.notifStates ?? notifStates,
+        sec_states: overrides?.secStates ?? secStates,
+      }, user.csrfToken);
     } catch {
       // silently fail — local state is already updated
     }
@@ -269,7 +279,8 @@ export default function SettingsPage() {
 
   const toggleNotif = async (id: string) => {
     const next = !notifStates[id];
-    setNotifStates((prev) => ({ ...prev, [id]: next }));
+    const newNotifStates = { ...notifStates, [id]: next };
+    setNotifStates(newNotifStates);
 
     if (id === 'push') {
       if (next) {
@@ -282,7 +293,9 @@ export default function SettingsPage() {
           });
           toast.success('Push notifications enabled');
         } else {
-          setNotifStates((prev) => ({ ...prev, push: false }));
+          const reverted = { ...newNotifStates, push: false };
+          setNotifStates(reverted);
+          await syncToServer({ notifStates: reverted });
           toast.warning('Push permission denied');
         }
       } else {
@@ -292,6 +305,7 @@ export default function SettingsPage() {
           await fetch(`/api/push/subscribe?endpoint=${encodeURIComponent(existing.endpoint)}`, { method: 'DELETE' });
         }
         await unsubscribeFromPush();
+        await syncToServer({ notifStates: newNotifStates });
         toast.info('Push notifications disabled');
       }
       return;
@@ -300,19 +314,20 @@ export default function SettingsPage() {
     if (id === 'alarm') {
       setAlarmEnabled(next);
       if (next) playAlarm();
-      await syncToServer();
+      await syncToServer({ notifStates: newNotifStates });
       toast.success(next ? 'Alarm sound enabled' : 'Alarm sound disabled');
       return;
     }
 
-    await syncToServer();
+    await syncToServer({ notifStates: newNotifStates });
     toast.success('Notification preference updated');
   };
 
   const toggleSec = async (id: string) => {
     const next = !secStates[id];
-    setSecStates((prev) => ({ ...prev, [id]: next }));
-    await syncToServer();
+    const newSecStates = { ...secStates, [id]: next };
+    setSecStates(newSecStates);
+    await syncToServer({ secStates: newSecStates });
     toast.success('Security setting updated');
   };
 
@@ -320,7 +335,7 @@ export default function SettingsPage() {
     if (!user) return;
     try {
       await Promise.all([
-        updateSettings({ daily_goal: dailyGoal, selected_theme: selectedTheme, notif_states: notifStates, sec_states: secStates }, user.csrfToken),
+        syncToServer(),
         createOrUpdateUser(user.uid, user.email || '', displayName || user.displayName || undefined, user.csrfToken),
       ]);
       cacheLocally();
@@ -531,7 +546,7 @@ export default function SettingsPage() {
                     return (
                       <button
                         key={theme.id}
-                        onClick={async () => { setSelectedTheme(theme.id); await syncToServer(); }}
+                        onClick={async () => { setSelectedTheme(theme.id); await syncToServer({ selectedTheme: theme.id }); }}
                         className={cn(
                           'relative rounded-[10px] p-3.5 border-2 transition-all duration-150 text-left',
                           isSelected
