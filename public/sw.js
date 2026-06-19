@@ -23,15 +23,17 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  const { pathname } = new URL(event.request.url);
-  // Never cache API responses — always go to network
-  if (pathname.startsWith('/api/')) {
-    return;
-  }
-  // Never cache Next.js internal routes or data
-  if (pathname.startsWith('/_next/')) {
-    return;
-  }
+  const url = new URL(event.request.url);
+
+  // Only handle same-origin requests — skip external URLs (images, fonts, etc.)
+  if (url.origin !== self.location.origin) return;
+
+  const { pathname } = url;
+  // Never cache API responses
+  if (pathname.startsWith('/api/')) return;
+  // Never cache Next.js internal routes
+  if (pathname.startsWith('/_next/')) return;
+
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request).then((res) => {
       const clone = res.clone();
