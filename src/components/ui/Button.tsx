@@ -13,16 +13,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', loading, children, disabled, ...props }, ref) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:opacity-50 disabled:cursor-not-allowed';
+      'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-bg-base disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants = {
       primary:
-        'bg-gradient-to-r from-primary to-cyan-400 text-white shadow-lg shadow-primary/20 hover:brightness-105 active:scale-[0.98]',
+        'gradient-bg text-white shadow-lg shadow-accent-blue/25 hover:brightness-105 active:scale-[0.97]',
       secondary:
-        'bg-white/[0.08] border border-slate-700 text-slate-100 hover:bg-slate-900/60 hover:text-white',
+        'bg-bg-raised border border-white/10 text-primary hover:bg-bg-hover hover:text-primary',
       danger:
-        'bg-rose-500/10 border border-rose-400/50 text-rose-300 hover:bg-rose-500/20 hover:text-white',
-      ghost: 'text-slate-300 hover:text-white hover:bg-white/[0.06]',
+        'bg-accent-red/10 border border-accent-red/50 text-accent-red hover:bg-accent-red/20 hover:text-primary',
+      ghost: 'text-secondary hover:text-primary hover:bg-bg-hover',
     };
 
     const sizes = {

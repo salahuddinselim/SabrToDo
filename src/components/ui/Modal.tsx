@@ -32,17 +32,17 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={cn(
-              'relative glass-strong rounded-3xl p-6 w-full max-w-lg',
-              'shadow-2xl shadow-cyan-950/50',
+              'relative glass-strong rounded-xl p-panel-lg w-full max-w-lg',
+              'shadow-2xl shadow-accent-blue/25',
               className
             )}
           >
             {title && (
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white">{title}</h2>
+                <h2 className="text-xl font-bold text-primary">{title}</h2>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-white"
+                  className="p-2 rounded-lg hover:bg-bg-hover transition-colors text-placeholder hover:text-primary"
                 >
                   <X className="w-5 h-5" />
                 </button>

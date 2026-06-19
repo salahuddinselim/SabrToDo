@@ -95,8 +95,8 @@ export function TaskFormModal({
       title={editTask ? 'Edit Task' : 'Create New Task'}
     >
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
-        <div className="glass rounded-2xl p-4 space-y-4">
-          <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
+          <div className="glass rounded-xl p-panel space-y-4">
+          <div className="flex items-center gap-2 text-secondary text-sm font-medium">
             <TextCursorInput className="w-4 h-4 text-primary" />
             Task details
           </div>
@@ -116,8 +116,8 @@ export function TaskFormModal({
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
-          <div className="glass rounded-2xl p-4 space-y-3">
-            <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
+          <div className="glass rounded-xl p-panel space-y-3">
+            <div className="flex items-center gap-2 text-secondary text-sm font-medium">
               <CalendarDays className="w-4 h-4 text-accent" />
               Schedule
             </div>
@@ -128,8 +128,8 @@ export function TaskFormModal({
             />
           </div>
 
-          <div className="glass rounded-2xl p-4 space-y-3">
-            <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
+          <div className="glass rounded-xl p-panel space-y-3">
+            <div className="flex items-center gap-2 text-secondary text-sm font-medium">
               <Flag className="w-4 h-4 text-secondary" />
               Priority & Alert
             </div>

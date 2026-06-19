@@ -40,8 +40,8 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/15 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/15 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent-blue/15 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-purple/15 rounded-full blur-3xl" />
       </div>
 
       <motion.div
@@ -53,7 +53,7 @@ export default function SignupPage() {
         <motion.div variants={item}>
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-cyan-100 mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-placeholder hover:text-primary mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to home
@@ -62,9 +62,9 @@ export default function SignupPage() {
 
         <motion.div variants={item} className="glass-strong rounded-3xl p-8">
           <div className="text-center mb-8">
-            <Logo size="lg" className="mx-auto mb-4 shadow-lg shadow-primary/20 rounded-2xl" />
+            <Logo size="lg" className="mx-auto mb-4 shadow-lg shadow-accent-blue/20 rounded-2xl" />
             <h1 className="text-2xl font-display font-bold text-white">Create your account</h1>
-            <p className="text-slate-300 mt-2">Start your productivity journey with SabrFlow</p>
+            <p className="text-secondary mt-2">Start your productivity journey with SabrFlow</p>
           </div>
 
           <Button
@@ -81,10 +81,10 @@ export default function SignupPage() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-700" />
+              <div className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-slate-900/70 text-slate-500">Secure & simple</span>
+              <span className="px-4 bg-surface/70 text-placeholder">Secure & simple</span>
             </div>
           </div>
 
@@ -97,17 +97,17 @@ export default function SignupPage() {
               <motion.div
                 key={index}
                 variants={item}
-                className="flex items-center gap-3 text-sm text-slate-400"
+                className="flex items-center gap-3 text-sm text-placeholder"
               >
-                <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <Check className="w-4 h-4 text-accent-green flex-shrink-0" />
                 {feature}
               </motion.div>
             ))}
           </div>
 
-          <p className="mt-6 text-center text-sm text-slate-400">
+          <p className="mt-6 text-center text-sm text-placeholder">
             Already have an account?{' '}
-            <Link href="/auth/login" className="text-primary hover:text-primary/80 transition-colors">
+            <Link href="/auth/login" className="text-accent-blue hover:text-accent-blue/80 transition-colors">
               Sign in
             </Link>
           </p>

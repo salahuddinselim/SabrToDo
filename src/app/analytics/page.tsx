@@ -201,7 +201,7 @@ export default function AnalyticsPage() {
         desc: 'Complete your first task',
         unlocked: completedTasksCount >= 1,
         icon: Sparkles,
-        color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
+        color: 'text-accent-blue bg-accent-blue/10 border-accent-blue/20',
       },
       {
         id: 'focused_builder',
@@ -209,7 +209,7 @@ export default function AnalyticsPage() {
         desc: 'Complete 5 tasks in total',
         unlocked: completedTasksCount >= 5,
         icon: Zap,
-        color: 'text-primary bg-primary/10 border-primary/20',
+        color: 'text-accent-blue bg-accent-blue/10 border-accent-blue/20',
       },
       {
         id: 'steady_momentum',
@@ -217,7 +217,7 @@ export default function AnalyticsPage() {
         desc: 'Achieve a 3-day focus streak',
         unlocked: streak >= 3,
         icon: Flame,
-        color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+        color: 'text-accent-yellow bg-accent-yellow/10 border-accent-yellow/20',
       },
       {
         id: 'sabr_mastery',
@@ -225,7 +225,7 @@ export default function AnalyticsPage() {
         desc: 'Achieve a 5-day focus streak',
         unlocked: streak >= 5,
         icon: Award,
-        color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+        color: 'text-accent-green bg-accent-green/10 border-accent-green/20',
       },
     ];
   }, [completedTasksCount, streak]);
@@ -243,8 +243,8 @@ export default function AnalyticsPage() {
 
       <main className="lg:ml-64 pt-16 min-h-screen relative">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-          <div className="absolute top-1/3 -right-32 w-80 h-80 bg-secondary/5 rounded-full blur-3xl" />
+          <div className="absolute -top-40 -left-40 w-96 h-96 bg-accent-blue/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/3 -right-32 w-80 h-80 bg-accent-purple/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10">
@@ -253,7 +253,7 @@ export default function AnalyticsPage() {
           <div className="mb-6">
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors text-sm"
+              className="inline-flex items-center gap-2 text-placeholder hover:text-primary mb-4 transition-colors text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Dashboard
@@ -261,11 +261,11 @@ export default function AnalyticsPage() {
             
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-display font-extrabold text-white tracking-tight flex items-center gap-3">
-                  <TrendingUp className="text-primary w-8 h-8" />
+                <h1 className="text-3xl font-display font-extrabold text-primary tracking-tight flex items-center gap-3">
+                  <TrendingUp className="text-accent-blue w-8 h-8" />
                   Performance Insights
                 </h1>
-                <p className="text-sm text-slate-400 mt-1">
+                <p className="text-sm text-placeholder mt-1">
                   Mindful analysis of your focus patterns, task velocity, and habits.
                 </p>
               </div>
@@ -274,50 +274,50 @@ export default function AnalyticsPage() {
 
           {/* Key metrics panel */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card className="border border-white/[0.05]">
+            <Card className="border border-white/10">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <div className="w-10 h-10 rounded-xl bg-accent-blue/10 flex items-center justify-center text-accent-blue">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-white">{completedTasksCount}</p>
-                  <p className="text-xs text-slate-400">Total Completed</p>
+                  <p className="text-xl font-bold text-primary">{completedTasksCount}</p>
+                  <p className="text-xs text-placeholder">Total Completed</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border border-white/[0.05]">
+            <Card className="border border-white/10">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                <div className="w-10 h-10 rounded-xl bg-accent-yellow/10 flex items-center justify-center text-accent-yellow">
                   <Flame className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-white">{streak} days</p>
-                  <p className="text-xs text-slate-400">Current Streak</p>
+                  <p className="text-xl font-bold text-primary">{streak} days</p>
+                  <p className="text-xs text-placeholder">Current Streak</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border border-white/[0.05]">
+            <Card className="border border-white/10">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400">
+                <div className="w-10 h-10 rounded-xl bg-accent-blue/10 flex items-center justify-center text-accent-blue">
                   <TrendingUp className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-white">{completionRate}%</p>
-                  <p className="text-xs text-slate-400">Completion Rate</p>
+                  <p className="text-xl font-bold text-primary">{completionRate}%</p>
+                  <p className="text-xs text-placeholder">Completion Rate</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border border-white/[0.05]">
+            <Card className="border border-white/10">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400">
+                <div className="w-10 h-10 rounded-xl bg-accent-red/10 flex items-center justify-center text-accent-red">
                   <AlertCircle className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-white">{overdueTasksCount}</p>
-                  <p className="text-xs text-slate-400">Overdue Warnings</p>
+                  <p className="text-xl font-bold text-primary">{overdueTasksCount}</p>
+                  <p className="text-xs text-placeholder">Overdue Warnings</p>
                 </div>
               </CardContent>
             </Card>
@@ -327,13 +327,13 @@ export default function AnalyticsPage() {
           <div className="grid gap-6 md:grid-cols-[1.4fr_1fr] mb-6">
             
             {/* Weekly Activity (Bar Chart) */}
-            <Card className="border border-white/[0.05]">
+            <Card className="border border-white/10">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-primary" />
+                  <Calendar className="w-4 h-4 text-accent-blue" />
                   <CardTitle className="text-sm font-semibold">Weekly Velocity</CardTitle>
                 </div>
-                <span className="text-[10px] text-slate-400 uppercase tracking-widest">Completed tasks (Last 7 days)</span>
+                <span className="text-[10px] text-placeholder uppercase tracking-widest">Completed tasks (Last 7 days)</span>
               </CardHeader>
               <CardContent className="pt-4 pb-2">
                 <div className="w-full h-56 flex items-end">
@@ -407,8 +407,8 @@ export default function AnalyticsPage() {
 
                     <defs>
                       <linearGradient id="bar-gradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--primary)" />
-                        <stop offset="100%" stopColor="var(--secondary)" />
+                        <stop offset="0%" stopColor="var(--accent-blue)" />
+                        <stop offset="100%" stopColor="var(--accent-purple)" />
                       </linearGradient>
                       <filter id="bar-glow" x="-20%" y="-20%" width="140%" height="140%">
                         <feGaussianBlur stdDeviation="3" />
@@ -420,17 +420,17 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* Priority Distribution (Donut Chart) */}
-            <Card className="border border-white/[0.05]">
+            <Card className="border border-white/10">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-secondary" />
+                  <Zap className="w-4 h-4 text-accent-purple" />
                   <CardTitle className="text-sm font-semibold">Priority Profile</CardTitle>
                 </div>
-                <span className="text-[10px] text-slate-400 uppercase tracking-widest">Tasks breakdown by priority</span>
+                <span className="text-[10px] text-placeholder uppercase tracking-widest">Tasks breakdown by priority</span>
               </CardHeader>
               <CardContent className="pt-2 pb-4 flex flex-col items-center">
                 {priorityDistribution.total === 0 ? (
-                  <div className="h-48 flex items-center justify-center text-xs text-slate-500">
+                  <div className="h-48 flex items-center justify-center text-xs text-placeholder">
                     No priorities recorded.
                   </div>
                 ) : (
@@ -461,7 +461,7 @@ export default function AnalyticsPage() {
                             cx="50"
                             cy="50"
                             r="30"
-                            stroke="var(--primary)"
+                            stroke="var(--accent-blue)"
                             strokeWidth="10"
                             strokeDasharray={`${donutData.medDash} ${donutData.circ - donutData.medDash}`}
                             strokeDashoffset={donutData.medOffset}
@@ -476,7 +476,7 @@ export default function AnalyticsPage() {
                             cx="50"
                             cy="50"
                             r="30"
-                            stroke="var(--secondary)"
+                            stroke="var(--accent-purple)"
                             strokeWidth="10"
                             strokeDasharray={`${donutData.lowDash} ${donutData.circ - donutData.lowDash}`}
                             strokeDashoffset={donutData.lowOffset}
@@ -487,33 +487,33 @@ export default function AnalyticsPage() {
                       </svg>
                       {/* Center label */}
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-bold text-white">{priorityDistribution.total}</span>
-                        <span className="text-[9px] text-slate-400 uppercase tracking-wider">Total</span>
+                        <span className="text-xl font-bold text-primary">{priorityDistribution.total}</span>
+                        <span className="text-[9px] text-placeholder uppercase tracking-wider">Total</span>
                       </div>
                     </div>
 
                     {/* Donut Legend */}
                     <div className="grid grid-cols-3 gap-6 mt-6 w-full text-center">
                       <div>
-                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-                          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
+                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-placeholder">
+                          <span className="w-2.5 h-2.5 rounded-full bg-accent-red inline-block" />
                           <span>High</span>
                         </div>
-                        <p className="text-sm font-bold text-white mt-1">{priorityDistribution.high}</p>
+                        <p className="text-sm font-bold text-primary mt-1">{priorityDistribution.high}</p>
                       </div>
                       <div>
-                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-                          <span className="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block" />
+                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-placeholder">
+                          <span className="w-2.5 h-2.5 rounded-full bg-accent-purple inline-block" />
                           <span>Medium</span>
                         </div>
-                        <p className="text-sm font-bold text-white mt-1">{priorityDistribution.medium}</p>
+                        <p className="text-sm font-bold text-primary mt-1">{priorityDistribution.medium}</p>
                       </div>
                       <div>
-                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-                          <span className="w-2.5 h-2.5 rounded-full bg-pink-500 inline-block" />
+                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-placeholder">
+                          <span className="w-2.5 h-2.5 rounded-full bg-accent-purple inline-block" />
                           <span>Low</span>
                         </div>
-                        <p className="text-sm font-bold text-white mt-1">{priorityDistribution.low}</p>
+                        <p className="text-sm font-bold text-primary mt-1">{priorityDistribution.low}</p>
                       </div>
                     </div>
                   </>
@@ -523,21 +523,21 @@ export default function AnalyticsPage() {
           </div>
 
           {/* GitHub style calendar grid (last 28 days) */}
-          <Card className="border border-white/[0.05] mb-6">
+          <Card className="border border-white/10 mb-6">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-cyan-400" />
+                <Calendar className="w-4 h-4 text-accent-blue" />
                 <CardTitle className="text-sm font-semibold">Mindful Completion Consistency</CardTitle>
               </div>
-              <span className="text-[10px] text-slate-400 uppercase tracking-widest">Completions calendar (Last 4 weeks)</span>
+              <span className="text-[10px] text-placeholder uppercase tracking-widest">Completions calendar (Last 4 weeks)</span>
             </CardHeader>
             <CardContent className="pb-4">
               <div className="flex flex-col items-center">
                 
                 {/* Heatmap Tooltip */}
-                <div className="h-6 mb-2 text-xs text-slate-400 text-center font-medium">
+                <div className="h-6 mb-2 text-xs text-placeholder text-center font-medium">
                   {hoveredDay ? (
-                    <span className="text-white">
+                    <span className="text-primary">
                       {hoveredDay.count} task{hoveredDay.count === 1 ? '' : 's'} completed on {hoveredDay.dateStr}
                     </span>
                   ) : (
@@ -550,11 +550,11 @@ export default function AnalyticsPage() {
                   {heatmapData.map((day) => {
                     // Density classes
                     const densityClass = cn(
-                      "w-5 h-5 rounded-md border border-white/[0.02] cursor-pointer transition-all duration-150 hover:scale-105",
-                      day.count === 0 && "bg-white/[0.02] hover:bg-white/[0.05]",
-                      day.count === 1 && "bg-primary/20 hover:bg-primary/30 border-primary/35",
-                      day.count === 2 && "bg-primary/45 hover:bg-primary/55 border-primary/60",
-                      day.count >= 3 && "bg-primary hover:bg-primary/90 border-primary/80"
+                      "w-5 h-5 rounded-md border border-white/10 cursor-pointer transition-all duration-150 hover:scale-105",
+                      day.count === 0 && "bg-surface/50 hover:bg-bg-hover",
+                      day.count === 1 && "bg-accent-blue/20 hover:bg-accent-blue/30 border-accent-blue/20",
+                      day.count === 2 && "bg-accent-blue/45 hover:bg-accent-blue/55 border-accent-blue/60",
+                      day.count >= 3 && "bg-accent-blue hover:bg-accent-blue/90 border-accent-blue/80"
                     );
 
                     return (
@@ -569,12 +569,12 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Grid color legend */}
-                <div className="flex items-center gap-2 mt-4 text-[10px] text-slate-500">
+                <div className="flex items-center gap-2 mt-4 text-[10px] text-placeholder">
                   <span>Less</span>
-                  <span className="w-3.5 h-3.5 rounded-sm bg-white/[0.02] border border-white/[0.02] inline-block" />
-                  <span className="w-3.5 h-3.5 rounded-sm bg-primary/20 border border-primary/35 inline-block" />
-                  <span className="w-3.5 h-3.5 rounded-sm bg-primary/45 border border-primary/60 inline-block" />
-                  <span className="w-3.5 h-3.5 rounded-sm bg-primary border border-primary/80 inline-block" />
+                  <span className="w-3.5 h-3.5 rounded-sm bg-surface/50 border border-white/10 inline-block" />
+                  <span className="w-3.5 h-3.5 rounded-sm bg-accent-blue/20 border border-accent-blue/20 inline-block" />
+                  <span className="w-3.5 h-3.5 rounded-sm bg-accent-blue/45 border border-accent-blue/60 inline-block" />
+                  <span className="w-3.5 h-3.5 rounded-sm bg-accent-blue border border-accent-blue/80 inline-block" />
                   <span>More</span>
                 </div>
 
@@ -583,13 +583,13 @@ export default function AnalyticsPage() {
           </Card>
 
           {/* Gamified Achievements Checklist */}
-          <Card className="border border-white/[0.05]">
+          <Card className="border border-white/10">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-emerald-400" />
+                <Award className="w-4 h-4 text-accent-green" />
                 <CardTitle className="text-sm font-semibold">Mindfulness Milestones</CardTitle>
               </div>
-              <span className="text-[10px] text-slate-400 uppercase tracking-widest">Unlocked achievements & growth milestones</span>
+              <span className="text-[10px] text-placeholder uppercase tracking-widest">Unlocked achievements & growth milestones</span>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
               {achievements.map((a) => {
@@ -600,8 +600,8 @@ export default function AnalyticsPage() {
                     className={cn(
                       "flex items-start gap-3.5 p-3.5 rounded-2xl border transition-all duration-200",
                       a.unlocked 
-                        ? "glass bg-white/[0.01] border-white/[0.05]" 
-                        : "bg-slate-950/[0.08] border-dashed border-white/[0.03] opacity-45"
+                        ? "glass bg-surface/50 border-white/10" 
+                        : "bg-bg-base/50 border-dashed border-white/10 opacity-45"
                     )}
                   >
                     <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border", a.color)}>
@@ -609,14 +609,14 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="text-xs font-semibold text-white truncate">{a.title}</p>
+                        <p className="text-xs font-semibold text-primary truncate">{a.title}</p>
                         {a.unlocked && (
-                          <span className="w-3.5 h-3.5 rounded-full bg-emerald-500/25 flex items-center justify-center">
-                            <Check className="w-2.5 h-2.5 text-emerald-400" />
+                          <span className="w-3.5 h-3.5 rounded-full bg-accent-green/25 flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-accent-green" />
                           </span>
                         )}
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-0.5 truncate">{a.desc}</p>
+                      <p className="text-[10px] text-placeholder mt-0.5 truncate">{a.desc}</p>
                     </div>
                   </div>
                 );

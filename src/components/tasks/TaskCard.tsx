@@ -31,15 +31,15 @@ export function TaskCard({
   const [isHovered, setIsHovered] = useState(false);
 
   const priorityColors = {
-    low: 'border-l-emerald-400/90',
-    medium: 'border-l-amber-400/90',
-    high: 'border-l-rose-400/90',
+    low: 'border-l-accent-green/80',
+    medium: 'border-l-accent-yellow/80',
+    high: 'border-l-accent-red/80',
   };
 
   const priorityBadges = {
-    low: 'bg-emerald-400/10 text-emerald-400',
-    medium: 'bg-amber-400/10 text-amber-400',
-    high: 'bg-red-400/10 text-red-400',
+    low: 'bg-accent-green/10 text-accent-green',
+    medium: 'bg-accent-yellow/10 text-accent-yellow',
+    high: 'bg-accent-red/10 text-accent-red',
   };
 
   const dueDateStatus = task.due_date ? getDueDateStatus(task.due_date) : null;
@@ -55,12 +55,12 @@ export function TaskCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'group relative glass rounded-xl p-3 transition-all duration-200',
-        'border-l-[3px] border border-cyan-100/10',
+        'group relative glass rounded-xl p-3 transition-all duration-base',
+        'border-l-[3px] border border-white/10',
         priorityColors[task.priority],
         isCompleted && 'opacity-60',
-        isDragging && 'shadow-2xl shadow-primary/30 rotate-1.5 scale-[1.02]',
-        !isDragging && 'hover:shadow-xl hover:shadow-cyan-950/35'
+        isDragging && 'shadow-2xl shadow-accent-blue/25 rotate-1.5 scale-[1.02]',
+        !isDragging && 'hover:shadow-xl hover:shadow-accent-blue/20'
       )}
     >
       <div className="flex items-start gap-2.5">
@@ -69,8 +69,8 @@ export function TaskCard({
             'flex-shrink-0 w-5 h-5 rounded-full border-2 cursor-pointer mt-1',
             'transition-all duration-200 flex items-center justify-center',
             isCompleted
-              ? 'bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-400'
-              : 'border-slate-500 hover:border-primary'
+              ? 'bg-accent-green border-accent-green'
+              : 'border-placeholder hover:border-primary'
           )}
           onClick={() => onToggleComplete(task.id)}
         >
@@ -80,15 +80,15 @@ export function TaskCard({
         <div className="flex-1 min-w-0">
           <h4
             className={cn(
-              'text-sm sm:text-[15px] font-semibold text-white transition-all duration-200',
-              isCompleted && 'line-through text-slate-400'
+              'text-sm sm:text-[15px] font-semibold text-primary transition-all duration-base',
+              isCompleted && 'line-through text-placeholder'
             )}
           >
               {sanitize(task.title)}
           </h4>
 
           {task.description && (
-            <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+            <p className="text-xs text-placeholder mt-1 line-clamp-2 leading-relaxed">
               {task.description}
             </p>
           )}
@@ -108,10 +108,10 @@ export function TaskCard({
                 className={cn(
                   'flex items-center gap-1 text-[10px] font-medium',
                   dueDateStatus === 'overdue' && !isCompleted
-                    ? 'text-red-400'
+                    ? 'text-accent-red'
                     : dueDateStatus === 'today'
-                    ? 'text-amber-400'
-                    : 'text-slate-400'
+                    ? 'text-accent-yellow'
+                    : 'text-placeholder'
                 )}
               >
                 {dueDateStatus === 'overdue' && !isCompleted ? (
@@ -135,13 +135,13 @@ export function TaskCard({
         >
           <button
             onClick={() => onEdit(task)}
-            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+            className="p-1.5 rounded-lg hover:bg-bg-hover transition-colors text-placeholder hover:text-primary"
           >
             <Edit2 className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => onDelete(task.id)}
-            className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors text-slate-400 hover:text-red-300"
+            className="p-1.5 rounded-lg hover:bg-accent-red/20 transition-colors text-placeholder hover:text-accent-red"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -153,7 +153,7 @@ export function TaskCard({
             isHovered && 'opacity-50'
           )}
         >
-          <GripVertical className="w-4 h-4 text-slate-500" />
+          <GripVertical className="w-4 h-4 text-placeholder" />
         </div>
       </div>
     </motion.div>

@@ -38,11 +38,11 @@ export function QuickAddTask({ compact }: { compact?: boolean }) {
       <div className="flex-1 relative">
         <Input
           placeholder={compact ? 'Quick add a task...' : 'Add a task... (press Enter)'}
-          className="bg-slate-950/10 border border-cyan-100/10 text-sm sm:text-base py-2.5 pl-3 pr-10 rounded-xl"
+          className="bg-bg-base/10 border border-white/10 text-sm sm:text-base py-2.5 pl-3 pr-10 rounded-xl"
           {...register('title')}
           error={errors.title?.message}
         />
-        <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-300/60" />
+        <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-accent-blue/60" />
       </div>
       <Button
         type="submit"

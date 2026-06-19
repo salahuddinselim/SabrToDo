@@ -48,33 +48,33 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
   const icons = {
-    success: <CheckCircle className="w-5 h-5 text-emerald-400" />,
-    error: <AlertCircle className="w-5 h-5 text-red-400" />,
-    info: <Info className="w-5 h-5 text-blue-400" />,
-    warning: <AlertTriangle className="w-5 h-5 text-amber-400" />,
+    success: <CheckCircle className="w-5 h-5 text-accent-green" />,
+    error: <AlertCircle className="w-5 h-5 text-accent-red" />,
+    info: <Info className="w-5 h-5 text-accent-blue" />,
+    warning: <AlertTriangle className="w-5 h-5 text-accent-yellow" />,
   };
 
   const borderColors = {
-    success: 'border-l-emerald-400',
-    error: 'border-l-red-400',
-    info: 'border-l-blue-400',
-    warning: 'border-l-amber-400',
+    success: 'border-l-accent-green',
+    error: 'border-l-accent-red',
+    info: 'border-l-accent-blue',
+    warning: 'border-l-accent-yellow',
   };
 
   return (
     <div
       className={cn(
-        'glass-strong rounded-2xl p-4 min-w-[300px] max-w-[420px]',
+        'glass-strong rounded-xl p-panel min-w-[300px] max-w-[420px]',
         'border-l-4 animate-slide-in-right flex items-start gap-3',
-        'shadow-lg shadow-cyan-950/50',
+        'shadow-lg shadow-accent-blue/25',
         borderColors[toast.type]
       )}
     >
       {icons[toast.type]}
-      <p className="flex-1 text-sm text-slate-100 leading-relaxed">{toast.message}</p>
+      <p className="flex-1 text-sm text-primary leading-relaxed">{toast.message}</p>
       <button
         onClick={() => onDismiss(toast.id)}
-        className="text-slate-400 hover:text-white transition-colors mt-0.5"
+        className="text-placeholder hover:text-primary transition-colors mt-0.5"
       >
         <X className="w-4 h-4" />
       </button>

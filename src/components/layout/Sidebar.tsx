@@ -15,7 +15,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 border-r border-cyan-100/10 h-[calc(100vh-4rem)] sticky top-16">
+    <aside className="hidden lg:flex flex-col w-64 border-r border-white/10 h-[calc(100vh-4rem)] sticky top-16">
       <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -28,8 +28,8 @@ export function Sidebar() {
               className={cn(
                 'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
                 isActive
-                  ? 'gradient-bg text-white shadow-lg shadow-primary/30'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                  ? 'gradient-bg text-white shadow-lg shadow-accent-blue/25'
+                  : 'text-placeholder hover:text-primary hover:bg-bg-hover'
               )}
             >
               <Icon className="w-5 h-5" />
@@ -39,21 +39,21 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-cyan-100/10">
-        <div className="glass rounded-2xl p-4">
+      <div className="p-4 border-t border-white/10">
+        <div className="glass rounded-xl p-panel">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center">
               <CheckCircle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-sm font-medium text-white">Daily Pulse</p>
-              <p className="text-xs text-slate-400">Keep going</p>
+              <p className="text-sm font-medium text-primary">Daily Pulse</p>
+              <p className="text-xs text-placeholder">Keep going</p>
             </div>
           </div>
-          <div className="h-2 bg-slate-800/90 rounded-full overflow-hidden">
+          <div className="h-2 bg-bg-raised/90 rounded-full overflow-hidden">
             <div className="h-full w-3/4 gradient-bg rounded-full" />
           </div>
-          <p className="text-xs text-slate-400 mt-2">75% of daily goal</p>
+          <p className="text-xs text-placeholder mt-2">75% of daily goal</p>
         </div>
       </div>
     </aside>

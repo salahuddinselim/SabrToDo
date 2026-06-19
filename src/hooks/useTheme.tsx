@@ -1,37 +1,16 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-
-export type Theme = 'solar' | 'amethyst' | 'emerald' | 'ocean';
+import React, { createContext, useContext } from 'react';
 
 interface ThemeContextType {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
+  theme: string;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('solar');
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('sabrflow-theme') as Theme;
-    if (savedTheme && ['solar', 'amethyst', 'emerald', 'ocean'].includes(savedTheme)) {
-      setThemeState(savedTheme);
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    } else {
-      document.documentElement.setAttribute('data-theme', 'solar');
-    }
-  }, []);
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem('sabrflow-theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-  };
-
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme: 'default' }}>
       {children}
     </ThemeContext.Provider>
   );

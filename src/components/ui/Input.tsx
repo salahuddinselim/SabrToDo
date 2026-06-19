@@ -13,21 +13,21 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-slate-300 mb-2">{label}</label>
+          <label className="block text-sm font-medium text-secondary mb-2">{label}</label>
         )}
         <input
           ref={ref}
           className={cn(
-            'w-full px-4 py-3 rounded-xl bg-slate-950/35 border border-slate-700/70',
-            'text-slate-100 placeholder:text-slate-500',
+            'w-full px-4 py-3 rounded-xl bg-bg-base/40 border border-white/10',
+            'text-primary placeholder:text-placeholder',
             'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/70',
-            'transition-all duration-200',
-            error && 'border-red-500 focus:ring-red-500/50 focus:border-red-500',
+            'transition-all duration-base',
+            error && 'border-accent-red focus:ring-accent-red/50 focus:border-accent-red',
             className
           )}
           {...props}
         />
-        {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
+        {error && <p className="mt-1 text-sm text-accent-red">{error}</p>}
       </div>
     );
   }
@@ -45,21 +45,21 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-slate-300 mb-2">{label}</label>
+          <label className="block text-sm font-medium text-secondary mb-2">{label}</label>
         )}
         <textarea
           ref={ref}
           className={cn(
-            'w-full px-4 py-3 rounded-xl bg-slate-950/35 border border-slate-700/70',
-            'text-slate-100 placeholder:text-slate-500 resize-none',
+            'w-full px-4 py-3 rounded-xl bg-bg-base/40 border border-white/10',
+            'text-primary placeholder:text-placeholder resize-none',
             'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/70',
-            'transition-all duration-200',
-            error && 'border-red-500 focus:ring-red-500/50 focus:border-red-500',
+            'transition-all duration-base',
+            error && 'border-accent-red focus:ring-accent-red/50 focus:border-accent-red',
             className
           )}
           {...props}
         />
-        {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
+        {error && <p className="mt-1 text-sm text-accent-red">{error}</p>}
       </div>
     );
   }
