@@ -38,6 +38,11 @@ export default function DashboardPage() {
 
   const { toast } = useToast();
 
+  // Re-fetch tasks on mount to ensure latest data from server
+  useEffect(() => {
+    if (user) refreshTasks();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Time-of-day Greeting
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -255,7 +260,23 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            {/* Daily Pulse — hidden on mobile */}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Refresh button */}
+              <button
+                onClick={refreshTasks}
+                disabled={loading}
+                className="flex items-center gap-1.5 text-[11px] text-ink-muted hover:text-primary transition-colors px-2 py-1.5 rounded-[8px] hover:bg-bg-hover"
+                title="Refresh tasks"
+              >
+                <svg className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="23 4 23 10 17 10" />
+                  <polyline points="1 20 1 14 7 14" />
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+                <span className="hidden sm:inline">{loading ? 'Syncing...' : 'Sync'}</span>
+              </button>
+
+              {/* Daily Pulse — hidden on mobile */}
             <div className="hidden md:flex items-center gap-3 bg-surface border border-white/10 rounded-[14px] px-[18px] py-3 shrink-0">
               <div className="relative w-12 h-12 flex items-center justify-center">
                 <svg className="absolute inset-0 w-12 h-12 -rotate-90" viewBox="0 0 48 48">
@@ -274,6 +295,7 @@ export default function DashboardPage() {
                 <p className="text-[13px] font-medium text-primary">Daily pulse</p>
                 <p className="text-[11px] text-ink-dim">Goal in reach</p>
               </div>
+            </div>
             </div>
           </div>
 

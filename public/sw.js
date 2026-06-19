@@ -1,4 +1,4 @@
-const CACHE = 'sabrflow-v1';
+const CACHE = 'sabrflow-v2';
 const STATIC_ASSETS = [
   '/',
   '/dashboard',
@@ -23,14 +23,21 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const { pathname } = new URL(event.request.url);
+  // Never cache API responses — always go to network
+  if (pathname.startsWith('/api/')) {
+    return;
+  }
+  // Never cache Next.js internal routes or data
+  if (pathname.startsWith('/_next/')) {
+    return;
+  }
   event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE).then((cache) => cache.put(event.request, clone));
-        return res;
-      })
-      .catch(() => caches.match(event.request))
+    caches.match(event.request).then((cached) => cached || fetch(event.request).then((res) => {
+      const clone = res.clone();
+      caches.open(CACHE).then((cache) => cache.put(event.request, clone));
+      return res;
+    }))
   );
 });
 
