@@ -463,119 +463,324 @@ export default function DashboardPage() {
               {/* Task List */}
               <div className="p-3">
 
+                {/* Overdue section - separate from Focus Today to show overdue tasks clearly */}
+                {overdueTasks.length > 0 && (
+                  <>
+                    <p className="text-[10px] uppercase tracking-[0.07em] text-ink-dim px-2 pb-[5px] pt-2">
+                      Overdue
+                    </p>
+                    <AnimatePresence mode="popLayout">
+                      {overdueTasks.map((task) => {
+                        const isAnimating = animatingChecks[task.id];
+                        return (
+                          <motion.div
+                            key={task.id}
+                            layout
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="flex items-center gap-3 px-2.5 py-[11px] rounded-[10px] hover:bg-raised transition-colors duration-150 group border-b border-white/5 last:border-b-0"
+                          >
+                            {/* Checkbox */}
+                            <button
+                              onClick={() => handleToggleTask(task.id)}
+                              className="relative w-[18px] h-[18px] rounded-full shrink-0 flex items-center justify-center transition-all duration-150"
+                            >
+                              <div
+                                className={cn(
+                                  'absolute inset-0 rounded-full border-2 transition-all duration-150',
+                                  task.status === 'completed'
+                                    ? 'border-accent-green bg-accent-green'
+                                    : 'border-white/20 group-hover:border-accent-blue'
+                                )}
+                              />
+                              {task.status === 'completed' && (
+                                <motion.svg
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                                  className="relative w-2.5 h-2.5 text-white z-10"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="20 6 9 17 4 12" />
+                                </motion.svg>
+                              )}
+                            </button>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 flex items-center gap-2.5">
+                              <span
+                                className={cn(
+                                  'text-[13.5px] transition-colors duration-150',
+                                  task.status === 'completed'
+                                    ? 'line-through text-ink-dim'
+                                    : 'text-primary'
+                                )}
+                              >
+                                {task.title}
+                              </span>
+                              {task.priority && task.status !== 'completed' && (
+                                <span
+                                  className={cn(
+                                    'text-[10px] font-medium rounded-[5px] px-[7px] py-0.5 shrink-0',
+                                    task.priority === 'high' && 'bg-accent-red/15 text-accent-red',
+                                    task.priority === 'medium' && 'bg-accent-yellow/15 text-accent-yellow',
+                                    task.priority === 'low' && 'bg-accent-green/15 text-accent-green'
+                                  )}
+                                >
+                                  {task.priority}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Due date - always shown for overdue */}
+                            {task.due_date && (
+                              <div className="flex items-center gap-1 text-[11px] shrink-0 text-accent-red">
+                                <Clock className="w-3 h-3" />
+                                <span>
+                                  {`Overdue by ${Math.ceil((new Date(task.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))}d`}
+                                </span>
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() => setDeleteConfirmId(task.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1 rounded-md hover:bg-accent-red/10 text-ink-dim hover:text-accent-red shrink-0"
+                              title="Delete task"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
+                    <div className="h-5" />
+                  </>
+                )}
+
                 {/* Focus Today section */}
-                {activeFilter !== 'completed' && activeFilter !== 'upcoming' && (
+                {activeFilter !== 'completed' && activeFilter !== 'upcoming' && todayTasks.length > 0 && (
                   <>
                     <p className="text-[10px] uppercase tracking-[0.07em] text-ink-dim px-2 pb-[5px] pt-2">
                       Focus today
                     </p>
-                    {todayTasks.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-10 px-4">
-                        <div className="w-10 h-10 rounded-full bg-accent-green/10 flex items-center justify-center mb-2.5">
-                          <CheckCircle2 className="w-5 h-5 text-accent-green" />
-                        </div>
-                        <p className="text-[13.5px] text-ink-muted font-medium">All clear for today</p>
-                        <p className="text-[12px] text-ink-dim mt-0.5">Enjoy the peace or create a new task.</p>
-                      </div>
-                    ) : (
-                      <AnimatePresence mode="popLayout">
-                        {todayTasks.map((task) => {
-                          const isAnimating = animatingChecks[task.id];
-                          return (
-                            <motion.div
-                              key={task.id}
-                              layout
-                              initial={{ opacity: 0, y: 8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.95 }}
-                              className="flex items-center gap-3 px-2.5 py-[11px] rounded-[10px] hover:bg-raised transition-colors duration-150 group"
+                    <AnimatePresence mode="popLayout">
+                      {todayTasks.map((task) => {
+                        const isAnimating = animatingChecks[task.id];
+                        return (
+                          <motion.div
+                            key={task.id}
+                            layout
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="flex items-center gap-3 px-2.5 py-[11px] rounded-[10px] hover:bg-raised transition-colors duration-150 group"
+                          >
+                            {/* Checkbox */}
+                            <button
+                              onClick={() => handleToggleTask(task.id)}
+                              className="relative w-[18px] h-[18px] rounded-full shrink-0 flex items-center justify-center transition-all duration-150"
                             >
-                              {/* Checkbox */}
-                              <button
-                                onClick={() => handleToggleTask(task.id)}
-                                className="relative w-[18px] h-[18px] rounded-full shrink-0 flex items-center justify-center transition-all duration-150"
-                              >
-                                <div
-                                  className={cn(
-                                    'absolute inset-0 rounded-full border-2 transition-all duration-150',
-                                    task.status === 'completed'
-                                      ? 'border-accent-green bg-accent-green'
-                                      : 'border-white/20 group-hover:border-accent-blue'
-                                  )}
-                                />
-                                {task.status === 'completed' && (
-                                  <motion.svg
-                                    initial={isAnimating ? { scale: 0 } : false}
-                                    animate={{ scale: 1 }}
-                                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                                    className="relative w-2.5 h-2.5 text-white z-10"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="3"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </motion.svg>
+                              <div
+                                className={cn(
+                                  'absolute inset-0 rounded-full border-2 transition-all duration-150',
+                                  task.status === 'completed'
+                                    ? 'border-accent-green bg-accent-green'
+                                    : 'border-white/20 group-hover:border-accent-blue'
                                 )}
-                              </button>
+                              />
+                              {task.status === 'completed' && (
+                                <motion.svg
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                                  className="relative w-2.5 h-2.5 text-white z-10"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="20 6 9 17 4 12" />
+                                </motion.svg>
+                              )}
+                            </button>
 
-                              {/* Content */}
-                              <div className="flex-1 min-w-0 flex items-center gap-2.5">
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 flex items-center gap-2.5">
+                              <span
+                                className={cn(
+                                  'text-[13.5px] transition-colors duration-150',
+                                  task.status === 'completed'
+                                    ? 'line-through text-ink-dim'
+                                    : 'text-primary'
+                                )}
+                              >
+                                {task.title}
+                              </span>
+                              {task.priority && task.status !== 'completed' && (
                                 <span
                                   className={cn(
-                                    'text-[13.5px] transition-colors duration-150',
-                                    task.status === 'completed'
-                                      ? 'line-through text-ink-dim'
-                                      : 'text-primary'
+                                    'text-[10px] font-medium rounded-[5px] px-[7px] py-0.5 shrink-0',
+                                    task.priority === 'high' && 'bg-accent-red/15 text-accent-red',
+                                    task.priority === 'medium' && 'bg-accent-yellow/15 text-accent-yellow',
+                                    task.priority === 'low' && 'bg-accent-green/15 text-accent-green'
                                   )}
                                 >
-                                  {task.title}
+                                  {task.priority}
                                 </span>
-                                {task.priority && task.status !== 'completed' && (
-                                  <span
-                                    className={cn(
-                                      'text-[10px] font-medium rounded-[5px] px-[7px] py-0.5 shrink-0',
-                                      task.priority === 'high' && 'bg-accent-red/15 text-accent-red',
-                                      task.priority === 'medium' && 'bg-accent-yellow/15 text-accent-yellow',
-                                      task.priority === 'low' && 'bg-accent-green/15 text-accent-green'
-                                    )}
-                                  >
-                                    {task.priority}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Due date */}
-                              {task.due_date && task.status !== 'completed' && (
-                                <div className={cn(
-                                  'flex items-center gap-1 text-[11px] shrink-0',
-                                  isOverdue(task.due_date) ? 'text-accent-red' : 'text-ink-dim'
-                                )}>
-                                  <Clock className="w-3 h-3" />
-                                  <span>
-                                    {isToday(task.due_date)
-                                      ? 'Today'
-                                      : isOverdue(task.due_date)
-                                      ? `${Math.ceil((new Date(task.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) * -1}d overdue`
-                                      : new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                  </span>
-                                </div>
                               )}
+                            </div>
 
-                              <button
-                                onClick={() => setDeleteConfirmId(task.id)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1 rounded-md hover:bg-accent-red/10 text-ink-dim hover:text-accent-red shrink-0"
-                                title="Delete task"
+                            {/* Due date */}
+                            {task.due_date && task.status !== 'completed' && (
+                              <div className={cn(
+                                'flex items-center gap-1 text-[11px] shrink-0',
+                                isOverdue(task.due_date) ? 'text-accent-red' : 'text-ink-dim'
+                              )}>
+                                <Clock className="w-3 h-3" />
+                                <span>
+                                  {isToday(task.due_date)
+                                    ? 'Today'
+                                    : isOverdue(task.due_date)
+                                    ? `${Math.ceil((new Date(task.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) * -1}d overdue`
+                                    : new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() => setDeleteConfirmId(task.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1 rounded-md hover:bg-accent-red/10 text-ink-dim hover:text-accent-red shrink-0"
+                              title="Delete task"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </>
+                )}
+
+                {/* Show message when no tasks match the filter */}
+                {activeFilter !== 'completed' && activeFilter !== 'upcoming' && overdueTasks.length === 0 && todayTasks.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-10 px-4">
+                    <CheckCircle2 className="w-8 h-8 text-ink-dim mb-2" />
+                    <p className="text-[13.5px] text-ink-muted">All caught up!</p>
+                    <p className="text-[12px] text-ink-dim mt-0.5">No tasks to focus on right now.</p>
+                  </div>
+                )}
+
+                {/* Upcoming section - only shows when filter is not today or completed */}
+                {activeFilter !== 'completed' && activeFilter !== 'today' && upcomingTasks.length > 0 && (
+                  <>
+                    <p className="text-[10px] uppercase tracking-[0.07em] text-ink-dim px-2 pb-[5px] pt-5">
+                      Upcoming
+                    </p>
+                    <AnimatePresence mode="popLayout">
+                      {upcomingTasks.map((task) => {
+                        const isAnimating = animatingChecks[task.id];
+                        return (
+                          <motion.div
+                            key={task.id}
+                            layout
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="flex items-center gap-3 px-2.5 py-[11px] rounded-[10px] hover:bg-raised transition-colors duration-150 group"
+                          >
+                            {/* Checkbox */}
+                            <button
+                              onClick={() => handleToggleTask(task.id)}
+                              className="relative w-[18px] h-[18px] rounded-full shrink-0 flex items-center justify-center transition-all duration-150"
+                            >
+                              <div
+                                className={cn(
+                                  'absolute inset-0 rounded-full border-2 transition-all duration-150',
+                                  task.status === 'completed'
+                                    ? 'border-accent-green bg-accent-green'
+                                    : 'border-white/20 group-hover:border-accent-blue'
+                                )}
+                              />
+                              {task.status === 'completed' && (
+                                <motion.svg
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                                  className="relative w-2.5 h-2.5 text-white z-10"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="20 6 9 17 4 12" />
+                                </motion.svg>
+                              )}
+                            </button>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 flex items-center gap-2.5">
+                              <span
+                                className={cn(
+                                  'text-[13.5px] transition-colors duration-150',
+                                  task.status === 'completed'
+                                    ? 'line-through text-ink-dim'
+                                    : 'text-primary'
+                                )}
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </motion.div>
-                          );
-                        })}
-                      </AnimatePresence>
-                    )}
+                                {task.title}
+                              </span>
+                              {task.priority && task.status !== 'completed' && (
+                                <span
+                                  className={cn(
+                                    'text-[10px] font-medium rounded-[5px] px-[7px] py-0.5 shrink-0',
+                                    task.priority === 'high' && 'bg-accent-red/15 text-accent-red',
+                                    task.priority === 'medium' && 'bg-accent-yellow/15 text-accent-yellow',
+                                    task.priority === 'low' && 'bg-accent-green/15 text-accent-green'
+                                  )}
+                                >
+                                  {task.priority}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Due date */}
+                            {task.due_date && task.status !== 'completed' && (
+                              <div className={cn(
+                                'flex items-center gap-1 text-[11px] shrink-0',
+                                isOverdue(task.due_date) ? 'text-accent-red' : 'text-ink-dim'
+                              )}>
+                                <Clock className="w-3 h-3" />
+                                <span>
+                                  {isToday(task.due_date)
+                                    ? 'Today'
+                                    : isOverdue(task.due_date)
+                                    ? `${Math.ceil((new Date(task.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) * -1}d overdue`
+                                    : new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() => setDeleteConfirmId(task.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1 rounded-md hover:bg-accent-red/10 text-ink-dim hover:text-accent-red shrink-0"
+                              title="Delete task"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
                   </>
                 )}
 
