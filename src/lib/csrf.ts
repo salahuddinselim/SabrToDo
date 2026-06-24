@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 function getSecret(): string {
   const secret = process.env.AUTH_SECRET;
@@ -10,14 +10,13 @@ function getSecret(): string {
 
 export function createCSRFToken(userId: string): string {
   const secret = getSecret();
-  const payload = `${userId}:${secret}`;
-  return createHash('sha256').update(payload).digest('hex');
+  return createHmac('sha256', secret).update(userId).digest('hex');
 }
 
 export function validateCSRFToken(token: string, userId: string): boolean {
   const expected = createCSRFToken(userId);
-  const tokenBuf = Buffer.from(token);
-  const expectedBuf = Buffer.from(expected);
+  const tokenBuf = Buffer.from(token, 'utf8');
+  const expectedBuf = Buffer.from(expected, 'utf8');
   if (tokenBuf.length !== expectedBuf.length) return false;
   try {
     return timingSafeEqual(tokenBuf, expectedBuf);

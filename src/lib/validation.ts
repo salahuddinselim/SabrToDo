@@ -61,6 +61,13 @@ export const reorderSchema = z.object({
     .min(1, 'At least one task ID is required'),
 });
 
+export const settingsSchema = z.object({
+  daily_goal: z.number().int().min(0).max(100).optional(),
+  selected_theme: z.string().max(100).optional(),
+  notif_states: z.record(z.boolean()).optional(),
+  sec_states: z.record(z.boolean()).optional(),
+});
+
 export const notificationSchema = z.object({
   type: z.enum(['due_soon', 'overdue', 'completed', 'daily_summary']),
   title: z

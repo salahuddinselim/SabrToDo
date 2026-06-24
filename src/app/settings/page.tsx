@@ -181,7 +181,10 @@ export default function SettingsPage() {
         if (sub && sub.endpoint) {
           await fetch('/api/push/subscribe', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': user?.csrfToken || '',
+            },
             body: JSON.stringify({ subscription: sub }),
           });
           toast.success('Push notifications enabled');
@@ -195,7 +198,12 @@ export default function SettingsPage() {
         const registration = await navigator.serviceWorker.ready;
         const existing = await registration.pushManager.getSubscription();
         if (existing?.endpoint) {
-          await fetch(`/api/push/subscribe?endpoint=${encodeURIComponent(existing.endpoint)}`, { method: 'DELETE' });
+          await fetch(`/api/push/subscribe?endpoint=${encodeURIComponent(existing.endpoint)}`, {
+            method: 'DELETE',
+            headers: {
+              'X-CSRF-Token': user?.csrfToken || '',
+            },
+          });
         }
         await unsubscribeFromPush();
         await syncToServer({ notifStates: newNotifStates });

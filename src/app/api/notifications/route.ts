@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllRows, appendRow, backfillUserEmail, emailMatches } from '@/lib/sheets';
+import { getAllRows, appendRow } from '@/lib/sheets';
 import { requireAuthForRequest, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
 import { notificationSchema } from '@/lib/validation';
 
@@ -30,11 +30,9 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuthForRequest(request);
 
-    await backfillUserEmail(user.id, user.email);
-
     const allRows = await getAllRows('notifications');
     const userNotifications = allRows
-      .filter((n) => emailMatches(n.user_email, user.email) || n.user_id === user.id)
+      .filter((n) => n.user_id === user.id)
       .sort(
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -52,7 +50,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuthForRequest(request);
-    await backfillUserEmail(user.id, user.email);
     const body = await request.json();
 
     const parsed = notificationSchema.safeParse(body);
@@ -69,7 +66,6 @@ export async function POST(request: NextRequest) {
     const notification = {
       id: randomUUID(),
       user_id: user.id,
-      user_email: user.email || '',
       type,
       title,
       message: message || '',

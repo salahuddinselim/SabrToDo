@@ -5,14 +5,12 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell,
-  Search,
   HelpCircle,
   LogOut,
   Check,
   Clock,
   AlertCircle,
 } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
 import { cn, formatRelativeTime, sanitize } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -62,17 +60,7 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          {/* Search — hidden on mobile */}
-          <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-placeholder" />
-            <Input
-              placeholder="Search tasks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-56 pl-9 pr-3 py-1.5 text-[13px] bg-raised border-0 rounded-[9px] placeholder:text-placeholder"
-            />
-          </div>
-
+  
           {/* Notification bell */}
           <div className="relative">
             <button

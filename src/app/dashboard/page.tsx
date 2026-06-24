@@ -11,9 +11,11 @@ import {
   Plus,
   ListTodo,
   AlertTriangle,
+  Trash2,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { TaskFormModal } from '@/components/tasks/TaskFormModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/useToast';
@@ -29,12 +31,11 @@ export default function DashboardPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [showCompleted, setShowCompleted] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [animatingChecks, setAnimatingChecks] = useState<Record<string, boolean>>({});
   const [quickCaptureText, setQuickCaptureText] = useState('');
   const [quickCapturePriority, setQuickCapturePriority] = useState<string>('medium');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const { toast } = useToast();
 
@@ -68,13 +69,32 @@ export default function DashboardPage() {
 
   // Task lists
   const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
-      return matchesSearch && matchesPriority;
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    const searchFiltered = tasks.filter((task) => {
+      const matchesSearch =
+        task.title.toLowerCase().includes(normalizedQuery) ||
+        task.description?.toLowerCase().includes(normalizedQuery);
+      return normalizedQuery ? matchesSearch : true;
     });
-  }, [tasks, searchQuery, filterPriority]);
+
+    switch (activeFilter) {
+      case 'today':
+        return searchFiltered.filter(
+          (task) => task.status === 'pending' && task.due_date && isToday(task.due_date)
+        );
+      case 'upcoming':
+        return searchFiltered.filter(
+          (task) => task.status === 'pending' && (!task.due_date || (isUpcoming(task.due_date) && !isToday(task.due_date)))
+        );
+      case 'high':
+        return searchFiltered.filter((task) => task.status === 'pending' && task.priority === 'high');
+      case 'completed':
+        return searchFiltered.filter((task) => task.status === 'completed');
+      default:
+        return searchFiltered;
+    }
+  }, [tasks, searchQuery, activeFilter]);
 
   const todayTasks = filteredTasks.filter(
     (task) => task.status === 'pending' && task.due_date && isToday(task.due_date)
@@ -231,9 +251,8 @@ export default function DashboardPage() {
   };
 
   const handleDeleteTask = async (id: string) => {
-    if (confirm('Are you sure you want to delete this task?')) {
-      await removeTask(id);
-    }
+    await removeTask(id);
+    setDeleteConfirmId(null);
   };
 
   const decorations = (
@@ -430,6 +449,7 @@ export default function DashboardPage() {
                         ? 'bg-accent-blue/10 border border-accent-blue text-accent-blue'
                         : 'border border-white/10 text-ink-muted hover:text-primary hover:border-white/20'
                     )}
+                    aria-pressed={activeFilter === f}
                   >
                     {f === 'all' && 'All'}
                     {f === 'today' && 'Today'}
@@ -543,6 +563,14 @@ export default function DashboardPage() {
                                   </span>
                                 </div>
                               )}
+
+                              <button
+                                onClick={() => setDeleteConfirmId(task.id)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1 rounded-md hover:bg-accent-red/10 text-ink-dim hover:text-accent-red shrink-0"
+                                title="Delete task"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </motion.div>
                           );
                         })}
@@ -628,30 +656,38 @@ export default function DashboardPage() {
                                   {task.priority}
                                 </span>
                               )}
-                            </div>
-
-                            {/* Due date */}
-                            {task.due_date && task.status !== 'completed' && (
-                              <div className={cn(
-                                'flex items-center gap-1 text-[11px] shrink-0',
-                                isOverdue(task.due_date) ? 'text-accent-red' : 'text-ink-dim'
-                              )}>
-                                <Clock className="w-3 h-3" />
-                                <span>
-                                  {isToday(task.due_date)
-                                    ? 'Today'
-                                    : isOverdue(task.due_date)
-                                    ? `${Math.ceil((new Date(task.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) * -1}d overdue`
-                                    : new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </span>
                               </div>
-                            )}
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
-                    )}
-                  </>
-                )}
+
+                              {/* Due date */}
+                              {task.due_date && task.status !== 'completed' && (
+                                <div className={cn(
+                                  'flex items-center gap-1 text-[11px] shrink-0',
+                                  isOverdue(task.due_date) ? 'text-accent-red' : 'text-ink-dim'
+                                )}>
+                                  <Clock className="w-3 h-3" />
+                                  <span>
+                                    {isToday(task.due_date)
+                                      ? 'Today'
+                                      : isOverdue(task.due_date)
+                                      ? `${Math.ceil((new Date(task.due_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) * -1}d overdue`
+                                      : new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                  </span>
+                                </div>
+                              )}
+
+                              <button
+                                onClick={() => setDeleteConfirmId(task.id)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1 rounded-md hover:bg-accent-red/10 text-ink-dim hover:text-accent-red shrink-0"
+                                title="Delete task"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      )}
+                    </>
+                  )}
 
                 {/* Completed section */}
                 {activeFilter === 'completed' && (
@@ -685,6 +721,13 @@ export default function DashboardPage() {
                               </svg>
                             </button>
                             <span className="flex-1 text-[13.5px] line-through text-ink-dim">{task.title}</span>
+                            <button
+                              onClick={() => setDeleteConfirmId(task.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1 rounded-md hover:bg-accent-red/10 text-ink-dim hover:text-accent-red shrink-0"
+                              title="Delete task"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </motion.div>
                         ))}
                       </AnimatePresence>
@@ -795,6 +838,16 @@ export default function DashboardPage() {
         }}
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
         editTask={editingTask}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteConfirmId !== null}
+        onClose={() => setDeleteConfirmId(null)}
+        onConfirm={() => deleteConfirmId && handleDeleteTask(deleteConfirmId)}
+        title="Delete task"
+        message="Are you sure you want to delete this task? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
       />
     </>
   );

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllRows, updateRowByColumn, appendRow, backfillUserEmail, emailMatches } from '@/lib/sheets';
+import { getAllRows, updateRowByColumn, appendRow } from '@/lib/sheets';
 import { requireAuthForRequest, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
 import { randomUUID } from 'crypto';
+import { settingsSchema } from '@/lib/validation';
 
 interface SettingsResponse {
   daily_goal: number;
@@ -36,17 +37,14 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireAuthForRequest(request);
 
-    await backfillUserEmail(user.id, user.email);
-
     const settings = await getAllRows('settings');
-    const existing = settings.find((s) => emailMatches(s.user_email, user.email) || s.user_id === user.id);
+    const existing = settings.find((s) => s.user_id === user.id);
 
     if (!existing) {
       const now = new Date().toISOString();
       await appendRow('settings', {
         id: randomUUID(),
         user_id: user.id,
-        user_email: user.email || '',
         daily_goal: String(defaultSettings.daily_goal),
         selected_theme: defaultSettings.selected_theme,
         notif_states: JSON.stringify(defaultSettings.notif_states),
@@ -67,27 +65,34 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const user = await requireAuthForRequest(request);
-    await backfillUserEmail(user.id, user.email);
     const body = await request.json();
 
+    const parsed = settingsSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.errors[0]?.message || 'Invalid settings payload' },
+        { status: 400 }
+      );
+    }
+
     const settings = await getAllRows('settings');
-    const existing = settings.find((s) => s.user_email === user.email || s.user_id === user.id);
+    const existing = settings.find((s) => s.user_id === user.id);
 
     if (!existing) {
       return NextResponse.json({ error: 'Settings not found' }, { status: 404 });
     }
 
-    const updates: Record<string, string> = { updated_at: new Date().toISOString(), user_email: user.email || '' };
+    const updates: Record<string, string> = { updated_at: new Date().toISOString() };
 
-    if (body.daily_goal !== undefined) updates.daily_goal = String(body.daily_goal);
-    if (body.selected_theme !== undefined) updates.selected_theme = body.selected_theme;
-    if (body.notif_states !== undefined) updates.notif_states = JSON.stringify(body.notif_states);
-    if (body.sec_states !== undefined) updates.sec_states = JSON.stringify(body.sec_states);
+    if (parsed.data.daily_goal !== undefined) updates.daily_goal = String(parsed.data.daily_goal);
+    if (parsed.data.selected_theme !== undefined) updates.selected_theme = parsed.data.selected_theme;
+    if (parsed.data.notif_states !== undefined) updates.notif_states = JSON.stringify(parsed.data.notif_states);
+    if (parsed.data.sec_states !== undefined) updates.sec_states = JSON.stringify(parsed.data.sec_states);
 
-    await updateRowByColumn('settings', 'id', existing.id, { ...existing, ...updates });
+    await updateRowByColumn('settings', 'user_id', user.id, { ...existing, ...updates });
 
     const all = await getAllRows('settings');
-    const updated = all.find((s) => emailMatches(s.user_email, user.email) || s.user_id === user.id);
+    const updated = all.find((s) => s.user_id === user.id);
     const response = NextResponse.json(updated ? toSettingsResponse(updated) : defaultSettings);
     return addRateLimitHeaders(response, user.id);
   } catch (error) {

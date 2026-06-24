@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllRows, updateMultipleRows, backfillUserEmail, emailMatches } from '@/lib/sheets';
-import { requireAuthForRequest, requireOwnership, addRateLimitHeaders, handleApiError, ApiError } from '@/lib/api-auth';
+import { getAllRows, updateMultipleRows } from '@/lib/sheets';
+import { requireAuthForRequest, requireOwnership, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
 import { reorderSchema } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuthForRequest(request);
-    await backfillUserEmail(user.id, user.email);
     const body = await request.json();
 
     const parsed = reorderSchema.safeParse(body);
@@ -23,11 +22,7 @@ export async function POST(request: NextRequest) {
     const updates = taskIds.map((id, index) => {
       const task = tasks.find((t) => t.id === id);
       if (!task) return null;
-      const ownsById = task.user_id === user.id;
-      const ownsByEmail = task.user_email && emailMatches(task.user_email, user.email);
-      if (!ownsById && !ownsByEmail) {
-        throw new ApiError(403, 'You do not have permission to reorder this task');
-      }
+      requireOwnership(user.id, task.user_id);
       return {
         matchValue: id,
         data: { ...task, order_index: String(index) },

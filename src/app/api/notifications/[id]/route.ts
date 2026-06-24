@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllRows, updateRowByColumn, backfillUserEmail } from '@/lib/sheets';
-import { requireAuthForRequest, requireOwnership, addRateLimitHeaders, handleApiError, ApiError } from '@/lib/api-auth';
+import { getAllRows, updateRowByColumn } from '@/lib/sheets';
+import { requireAuthForRequest, requireOwnership, addRateLimitHeaders, handleApiError } from '@/lib/api-auth';
 
 export async function PATCH(
   request: NextRequest,
@@ -8,8 +8,6 @@ export async function PATCH(
 ) {
   try {
     const user = await requireAuthForRequest(request);
-
-    await backfillUserEmail(user.id, user.email);
 
     const notifications = await getAllRows('notifications');
     const notification = notifications.find((n) => n.id === params.id);
@@ -21,11 +19,7 @@ export async function PATCH(
       );
     }
 
-    const ownsById = notification.user_id === user.id;
-    const ownsByEmail = notification.user_email && emailMatches(notification.user_email, user.email);
-    if (!ownsById && !ownsByEmail) {
-      throw new ApiError(403, 'You do not have permission to modify this notification');
-    }
+    requireOwnership(user.id, notification.user_id);
 
     await updateRowByColumn('notifications', 'id', params.id, {
       ...notification,

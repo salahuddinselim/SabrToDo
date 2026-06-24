@@ -19,11 +19,18 @@ function cleanup() {
 
 setInterval(cleanup, 60_000);
 
-export function checkRateLimit(userId: string): { allowed: boolean; remaining: number; resetAt: number } {
+export function checkRateLimit(
+  userId: string,
+  consume = true
+): { allowed: boolean; remaining: number; resetAt: number } {
   const now = Date.now();
   const entry = store.get(userId);
 
   if (!entry || entry.resetAt <= now) {
+    if (!consume) {
+      return { allowed: true, remaining: MAX_REQUESTS, resetAt: now + WINDOW_MS };
+    }
+
     store.set(userId, { count: 1, resetAt: now + WINDOW_MS });
     return { allowed: true, remaining: MAX_REQUESTS - 1, resetAt: now + WINDOW_MS };
   }
@@ -32,6 +39,9 @@ export function checkRateLimit(userId: string): { allowed: boolean; remaining: n
     return { allowed: false, remaining: 0, resetAt: entry.resetAt };
   }
 
-  entry.count++;
+  if (consume) {
+    entry.count++;
+  }
+
   return { allowed: true, remaining: MAX_REQUESTS - entry.count, resetAt: entry.resetAt };
 }
