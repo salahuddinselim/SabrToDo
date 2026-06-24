@@ -59,7 +59,7 @@ export function emailMatches(rowEmail: string, userEmail?: string | null): boole
   return normalizeEmail(rowEmail) === normalizeEmail(userEmail);
 }
 
-async function migrateUserIdAcrossSheets(oldUid: string, newUid: string, normalizedEmail: string) {
+async function migrateUserIdAcrossSheets(oldUid: string, newUid: string, _normalizedEmail: string) {
   const sheetsToMigrate: SheetName[] = ['tasks', 'notifications', 'settings', 'push_subscriptions'];
   for (const sheetName of sheetsToMigrate) {
     const rows = await getAllRows(sheetName);
@@ -70,7 +70,6 @@ async function migrateUserIdAcrossSheets(oldUid: string, newUid: string, normali
         data: {
           ...row,
           user_id: newUid,
-          user_email: normalizedEmail,
         },
       }));
     if (updates.length > 0) {

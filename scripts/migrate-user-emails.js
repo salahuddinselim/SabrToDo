@@ -30,17 +30,17 @@ if (!SPREADSHEET_ID || !SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY) {
 const HEADERS = {
   users: ['id', 'firebase_uid', 'email', 'display_name', 'created_at', 'updated_at'],
   tasks: [
-    'id', 'user_id', 'user_email', 'title', 'description', 'due_date',
+    'id', 'user_id', 'title', 'description', 'due_date',
     'priority', 'status', 'notify_before', 'created_at', 'completed_at', 'order_index',
   ],
   notifications: [
-    'id', 'user_id', 'user_email', 'type', 'title', 'message', 'task_id', 'is_read', 'created_at',
+    'id', 'user_id', 'type', 'title', 'message', 'task_id', 'is_read', 'created_at',
   ],
   push_subscriptions: [
-    'id', 'user_id', 'user_email', 'endpoint', 'subscription', 'created_at',
+    'id', 'user_id', 'endpoint', 'subscription', 'created_at',
   ],
   settings: [
-    'id', 'user_id', 'user_email', 'daily_goal', 'selected_theme', 'notif_states', 'sec_states', 'updated_at',
+    'id', 'user_id', 'daily_goal', 'selected_theme', 'notif_states', 'sec_states', 'updated_at',
   ],
 };
 
@@ -154,7 +154,7 @@ async function updateMultipleRows(sheetName, columnName, updates) {
   }
 }
 
-async function migrateUserIdAcrossSheets(oldUid, newUid, normalizedEmail) {
+async function migrateUserIdAcrossSheets(oldUid, newUid, _normalizedEmail) {
   const sheetsToMigrate = ['tasks', 'notifications', 'settings', 'push_subscriptions'];
   for (const sheetName of sheetsToMigrate) {
     const rows = await getAllRows(sheetName);
@@ -165,7 +165,6 @@ async function migrateUserIdAcrossSheets(oldUid, newUid, normalizedEmail) {
         data: {
           ...row,
           user_id: newUid,
-          user_email: normalizedEmail,
         },
       }));
     await updateMultipleRows(sheetName, 'id', updates);
